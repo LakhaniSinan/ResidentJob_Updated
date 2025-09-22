@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1064475164652",
+    "project_id": "residentjob-4da34",
+    "storage_bucket": "residentjob-4da34.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064475164652:android:39aed1d571999530d44ac9",
+        "android_client_info": {
+          "package_name": "com.residentjobs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1064475164652-9bfkjrh2058h41fdv723an4631lulsar.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.residentjobs",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "1064475164652-s7p3ld0brarmi7i6fa1sl316n5l4jl2i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_tmXLsI4KXJI40uIZBA77a9A7hbQbeio"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1064475164652-s7p3ld0brarmi7i6fa1sl316n5l4jl2i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,640 @@
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import moment from 'moment';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {
+  FlatList,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+  Keyboard,
+  View,
+} from 'react-native';
+import DatePicker from 'react-native-date-picker';
+import {width} from 'react-native-dimension';
+import Entypo from '@react-native-vector-icons/entypo';
+import {useSelector} from 'react-redux';
+import {appIcons, fontFamily} from '../../../assets';
+import AppHeader from '../../../components/appHeader';
+import Button from '../../../components/button';
+import CommonAlert from '../../../components/commanAlert';
+import CustomCheckBox from '../../../components/customcheckBox';
+import GooglePlacesInput from '../../../components/googlePlaceInput';
+import Loader from '../../../components/loader';
+import InputField from '../../../components/textInput';
+import {appColors} from '../../../constants';
+import {GetJobTitle} from '../../../services/authentication';
+import {createJobForAdmin} from '../../../services/createJob';
+import {createGorupJob} from '../../../services/groupJob';
+import {getSettings} from '../../../services/setting';
+import {styles} from './style';
+
+const SearchScreen = ({route}) => {
+  const constants = useRef(null);
+  const {user} = useSelector(state => state.LoginSlice);
+  const navigation = useNavigation();
+  const [settings, setSettings] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+  const [jobTitles, setJobTitles] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [openDatePicker, setOpenDatePicker] = useState({type: '', index: null});
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchInitialData();
+    }, [route.params?._id ?? '']),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      handleFetchSettings();
+    }, []),
+  );
+
+  const handleFetchSettings = async () => {
+    try {
+      setLoading(true);
+      const res = await getSettings();
+      if (res.status === 200 || res.status == 201) {
+        setSettings(res.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch Terms & Conditions', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchInitialData = async () => {
+    setLoading(true);
+    try {
+      const response = await GetJobTitle();
+      if (response.status === 200 || response.status === 201) {
+        const selectedId = route?.params?._id || null;
+
+        setJobTitles(
+          response?.data?.data?.map(item => {
+            const isMatch = selectedId ? item._id === selectedId : false;
+            return {
+              ...item,
+              isSelected: isMatch,
+              requiredPeoples: 1,
+              startDate: '',
+              endDate: '',
+              startTime: '',
+              endTime: '',
+              totalHours: '',
+              hourlyRate: String(item?.price),
+            };
+          }),
+        );
+      }
+    } catch (error) {
+      console.log('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJobTitleSelection = index => {
+    setJobTitles(prev =>
+      prev.map((job, i) =>
+        i === index ? {...job, isSelected: !job.isSelected} : job,
+      ),
+    );
+  };
+
+  const handleChangeJobField = (index, field, value) => {
+    setJobTitles(prev =>
+      prev.map((job, i) => {
+        if (i === index) {
+          let updatedJob = {...job};
+
+          // ✅ Check if dates are selected before allowing time selection
+          if (
+            (field === 'startTime' || field === 'endTime') &&
+            (!updatedJob.startDate || !updatedJob.endDate)
+          ) {
+            constants.current.isVisible({
+              status: 'error',
+              message:
+                'Please select start and end dates before selecting times.',
+            });
+            return job;
+          }
+
+          // ✅ Convert time to "hh:00 A" format
+          if (field === 'startTime' || field === 'endTime') {
+            const formattedTime = moment(value).format('hh:00 A');
+            updatedJob[field] = formattedTime;
+
+            // ✅ Reset end time when start time is changed and end time was previously selected
+            if (field === 'startTime' && updatedJob.endTime) {
+              updatedJob.endTime = '';
+              updatedJob.totalHours = '';
+            }
+          } else {
+            updatedJob[field] = value;
+          }
+
+          // ✅ Check time difference between startTime and endTime
+          if (field === 'endTime' && updatedJob.startTime) {
+            let startMoment = moment(updatedJob.startTime, 'hh:mm A');
+            let endMoment = moment(updatedJob.endTime, 'hh:mm A');
+
+            // Handle overnight (e.g. 9PM to 3AM next day)
+            if (endMoment.isBefore(startMoment)) {
+              // Automatically update end date to next day
+              const currentEndDate = moment(updatedJob.endDate);
+              const newEndDate = moment(updatedJob.startDate).add(1, 'day');
+
+              // Update the end date
+              updatedJob.endDate = newEndDate.format('YYYY-MM-DD');
+
+              // Show info message about automatic date update
+              setTimeout(() => {
+                constants.current.isVisible({
+                  status: 'ok',
+                  message: `End date automatically updated to ${newEndDate.format(
+                    'MM/DD/YYYY',
+                  )} due to overnight timing.`,
+                });
+              }, 100);
+
+              endMoment.add(1, 'day');
+            }
+
+            const totalHours = endMoment.diff(startMoment, 'hours', true);
+
+            if (totalHours < 6) {
+              constants.current.isVisible({
+                status: 'error',
+                message:
+                  'Minimum difference between startTime and endTime should be 6 hours',
+              });
+              return job;
+            } else {
+              updatedJob.totalHours = totalHours.toFixed();
+            }
+          }
+
+          // ✅ Check if endDate is before startDate
+          if (field === 'endDate' && updatedJob.startDate) {
+            const startDate = moment(updatedJob.startDate, 'YYYY-MM-DD');
+            const endDate = moment(value, 'YYYY-MM-DD');
+
+            if (endDate.isBefore(startDate, 'day')) {
+              constants.current.isVisible({
+                status: 'error',
+                message: 'End Date cannot be before Start Date.',
+              });
+              return job;
+            }
+
+            // ✅ Minimum 6 hour difference check with date+time
+            const startDateTime = moment(
+              `${updatedJob.startDate} ${updatedJob.startTime || '00:00 AM'}`,
+              'YYYY-MM-DD hh:mm A',
+            );
+            let endDateTime = moment(
+              `${value} ${updatedJob.endTime || '11:59 PM'}`,
+              'YYYY-MM-DD hh:mm A',
+            );
+
+            // Handle overnight shifts (if same day and end time is before start time)
+            if (
+              startDate.isSame(endDate, 'day') &&
+              updatedJob.endTime &&
+              updatedJob.startTime
+            ) {
+              const startTime = moment(updatedJob.startTime, 'hh:mm A');
+              const endTime = moment(updatedJob.endTime, 'hh:mm A');
+
+              if (endTime.isBefore(startTime)) {
+                endDateTime.add(1, 'day');
+              }
+            }
+
+            const dateDiffInHours = endDateTime.diff(
+              startDateTime,
+              'hours',
+              true,
+            );
+
+            if (dateDiffInHours < 6) {
+              alert(
+                'You cannot select this end Date. Minimum 6 hours difference required.',
+              );
+              return job;
+            }
+          }
+
+          return updatedJob;
+        }
+        return job;
+      }),
+    );
+  };
+
+  const handleAdd = async () => {
+    const selectedJobs = jobTitles?.filter(job => job.isSelected);
+
+    let allFieldsFilled = selectedJobs?.every(
+      job =>
+        job.startDate &&
+        job.endDate &&
+        job.startTime &&
+        job.endTime &&
+        job.totalHours,
+    );
+
+    if (!allFieldsFilled) {
+      return constants.current?.isVisible({
+        status: 'error',
+        message: 'Please fill in all required fields for selected job titles.',
+      });
+    }
+
+    if (!selectedLocation) {
+      return constants.current.isVisible({
+        status: 'error',
+        message: 'Please enter location',
+      });
+    }
+
+    try {
+      let newArra;
+      totalAmount = 0;
+      newArra = selectedJobs?.map(item => {
+        if (
+          !item.endDate ||
+          !item.startDate ||
+          !item.startTime ||
+          !item.endTime ||
+          !item.totalHours
+        ) {
+          return null;
+        }
+        const momentDate1 = moment(item.endDate);
+        const momentDate2 = moment(item.startDate);
+        let differenceInDays = momentDate1.diff(momentDate2, 'days') + 1;
+        const amount =
+          item.hourlyRate *
+          item.totalHours *
+          item.requiredPeoples *
+          differenceInDays;
+        totalAmount += amount;
+        return {
+          ...item,
+        };
+      });
+      console.log(totalAmount, 'selectedJobsselectedJobsselectedJobs');
+
+      // return
+      let params = {
+        job: newArra,
+        address: selectedLocation?.userAddress,
+        latitude: selectedLocation?.latLng.lat,
+        longitude: selectedLocation?.latLng.lng,
+        jobStatus: 'Pending',
+        createdBy: user?.userDetails?._id,
+        jobType: newArra?.length > 1 ? 'Group' : 'Single',
+        totalCost: totalAmount,
+        qst: settings.qst,
+        gst: settings.gst,
+      };
+
+      setLoading(true);
+
+      const groupJobResponse = await createGorupJob(params);
+
+      // Check if first API call succeeded
+      if (groupJobResponse.status !== 200 && groupJobResponse.status !== 201) {
+        setLoading(false);
+        constants.current.isVisible({
+          status: 'error',
+          message:
+            groupJobResponse?.data?.message || 'Failed to create group job',
+        });
+        return;
+      }
+
+      let data = groupJobResponse?.data?.data;
+      let roles = data?.job?.map(item => {
+        return {
+          role: item?.name,
+          requiredCount: Number(item?.requiredPeoples),
+          totalHoursPerDay: Number(item?.totalHours),
+          startDate: item?.startDate,
+          endDate: item?.endDate,
+          startTime: item?.startTime,
+          endTime: item?.endTime,
+        };
+      });
+
+      let payload = {
+        jobId: data?._id,
+        roles,
+      };
+
+      const adminJobResponse = await createJobForAdmin(payload);
+
+      // Check if second API call succeeded
+      if (adminJobResponse.status === 200 || adminJobResponse.status === 201) {
+        setLoading(false);
+        constants.current.isVisible({
+          status: 'ok',
+          message:
+            adminJobResponse?.data?.message ||
+            groupJobResponse?.data?.message ||
+            'Job created successfully!',
+          handlePressOk: () => {
+            constants.current.backdropPress();
+            fetchInitialData();
+            setSelectedLocation(null);
+            navigation.navigate('OnGoingHistoryStack');
+          },
+        });
+      } else {
+        setLoading(false);
+        constants.current.isVisible({
+          status: 'error',
+          message:
+            adminJobResponse?.data?.message || 'Failed to create job for admin',
+        });
+      }
+    } catch (error) {
+      console.log('🚀 ~ handleAdd ~ error:', error);
+      setLoading(false);
+      constants.current.isVisible({
+        status: 'error',
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Something went wrong. Please try again.',
+      });
+    }
+  };
+
+  const renderJobTitle = ({item, index}) => {
+    return (
+      <View style={styles.jobTitleContainer}>
+        <CustomCheckBox
+          checked={item.isSelected}
+          type="checkout"
+          containerStyles={styles.checkboxContainer}
+          label={item.name}
+          onChange={() => handleJobTitleSelection(index)}
+        />
+
+        {item.isSelected && (
+          <View style={styles.inputContainer}>
+            <View
+              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <View>
+                <Text style={styles.labelBold}>Start Date</Text>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setOpenDatePicker({type: 'startDate', index})}>
+                  <Text style={styles.datePickerText}>
+                    {item.startDate
+                      ? moment(item.startDate).format('MM/DD/YYYY')
+                      : '(mm/dd/yyyy)'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View>
+                <Text style={styles.labelBold}>End Date</Text>
+                <TouchableOpacity
+                  style={styles.datePickerButton}
+                  onPress={() => setOpenDatePicker({type: 'endDate', index})}>
+                  <Text style={styles.datePickerText}>
+                    {item.endDate
+                      ? moment(item.endDate).format('MM/DD/YYYY')
+                      : '(mm/dd/yyyy)'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Start Time and End Time Fields */}
+            <View
+              style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+              <View>
+                <Text style={styles.labelBold}>Start Time</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.datePickerButton,
+                    (!item.startDate || !item.endDate) && {opacity: 0.5},
+                  ]}
+                  disabled={!item.startDate || !item.endDate}
+                  onPress={() => setOpenDatePicker({type: 'startTime', index})}>
+                  <Text style={styles.datePickerText}>
+                    {item.startTime
+                      ? item.startTime // moment(item.startTime).format('hh:00 A')
+                      : '(hh:mm A)'}
+                  </Text>
+                </TouchableOpacity>
+                {(!item.startDate || !item.endDate) && (
+                  <Text
+                    style={{fontSize: 10, color: appColors.gray, marginTop: 2}}>
+                    Select dates first
+                  </Text>
+                )}
+              </View>
+              <View>
+                <Text style={styles.labelBold}>End Time</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.datePickerButton,
+                    (!item.startDate || !item.endDate) && {opacity: 0.5},
+                  ]}
+                  disabled={!item.startDate || !item.endDate}
+                  onPress={() => setOpenDatePicker({type: 'endTime', index})}>
+                  <Text style={styles.datePickerText}>
+                    {item.endTime
+                      ? item.endTime // moment(item.endTime).format('hh:00 A')
+                      : '(hh:mm A)'}
+                  </Text>
+                </TouchableOpacity>
+                {(!item.startDate || !item.endDate) && (
+                  <Text
+                    style={{fontSize: 10, color: appColors.gray, marginTop: 2}}>
+                    Select dates first
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <Text style={styles.labelBold}>Amount to be paid? (per/hr)</Text>
+            <InputField
+              placeholder="Hourly Rate"
+              placeholderTextColor={appColors.gray}
+              keyboardType="numeric"
+              isEditable={false}
+              value={item.hourlyRate}
+              onChangeText={text =>
+                handleChangeJobField(index, 'hourlyRate', text)
+              }
+            />
+
+            <Text style={styles.labelBold}>How many people required?</Text>
+            <View style={styles.counterContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() =>
+                  handleChangeJobField(
+                    index,
+                    'requiredPeoples',
+                    Math.max(item.requiredPeoples - 1, 1),
+                  )
+                }>
+                <Entypo name="minus" color={appColors.black} size={15} />
+              </TouchableOpacity>
+              <Text style={styles.counterText}>{item.requiredPeoples}</Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() =>
+                  handleChangeJobField(
+                    index,
+                    'requiredPeoples',
+                    item.requiredPeoples + 1,
+                  )
+                }>
+                <Entypo name="plus" color={appColors.black} size={15} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const handleLogin = () => {
+    navigation.navigate('Login', {
+      type: 'hire',
+    });
+  };
+
+  const renderSearchContent = () => {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Loader isLoading={loading} />
+        <AppHeader
+          height={70}
+          leftIconStyle={{height: 27, width: 27}}
+          leftIcon={appIcons.goBackIcon}
+          heading="New Job Hiring"
+          headingColor={appColors.white}
+        />
+        <View
+          style={{
+            borderRadius: width(4),
+            backgroundColor: appColors.white,
+            margin: width(4),
+            padding: width(3),
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+
+            elevation: 5,
+          }}>
+          <Text
+            style={{
+              fontSize: 15,
+              fontFamily: fontFamily.poppinsBold,
+              color: appColors.black,
+            }}>
+            📌 Minimum Duration: 6 Hours
+          </Text>
+          <Text
+            style={{
+              marginTop: width(2),
+              fontFamily: fontFamily.poppinsMedium,
+              fontSize: 12,
+              color: appColors.gray,
+            }}>
+            Please note that the minimum booking duration for all services is 6
+            hours. Any requests below this time frame will not be accepted.
+          </Text>
+        </View>
+        <FlatList
+          keyboardShouldPersistTaps="handled"
+          data={jobTitles}
+          ListHeaderComponent={
+            <View style={styles.locationContainer}>
+              <Text style={styles.labelBold}>
+                Please enter your pin-location.
+              </Text>
+
+              <GooglePlacesInput
+                showLeftIcon
+                showRightIcon
+                selectedLocation={selectedLocation}
+                setSelectedLocation={setSelectedLocation}
+                placeholder="Select your locations"
+              />
+            </View>
+          }
+          keyExtractor={item =>
+            item._id?.toString() || Math.random().toString()
+          }
+          renderItem={renderJobTitle}
+        />
+        <DatePicker
+          modal
+          mode={openDatePicker.type.includes('Time') ? 'time' : 'date'}
+          open={!!openDatePicker.type}
+          minuteInterval={60}
+          date={new Date()}
+          onConfirm={date => {
+            setOpenDatePicker({type: '', index: null});
+            handleChangeJobField(
+              openDatePicker.index,
+              openDatePicker.type,
+              date,
+            );
+          }}
+          onCancel={() => setOpenDatePicker({type: '', index: null})}
+        />
+        {!isKeyboardVisible && (
+          <View style={{margin: width(5)}}>
+            <Button
+              btnTitle="Create New Job"
+              btnTextStyle={styles.btnTextStyle}
+              buttonContainer={styles.updateBtn}
+              handlePressBtn={handleAdd}
+            />
+          </View>
+        )}
+        <CommonAlert ref={constants} />
+      </SafeAreaView>
+    );
+  };
+
+  useEffect(() => {
+    renderContent();
+  }, [user]);
+
+  const renderContent = () => {
+    return user?.userDetails?._id ? renderSearchContent() : handleLogin();
+  };
+
+  return <>{renderContent()}</>;
+};
+
+export default SearchScreen;
