@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import {width} from 'react-native-dimension';
 import RNFS from 'react-native-fs';
-import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import {generatePDF} from 'react-native-html-to-pdf';
 import {useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
@@ -22,9 +22,9 @@ import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import CustomCheckBox from '../../../components/customcheckBox';
 import Loader from '../../../components/loader';
+import RenderReviewCard from '../../../components/reviewCard/reviewCard';
 import {appColors} from '../../../constants';
 import {updateJobByAdmin} from '../../../services/wallet';
-import RenderReviewCard from '../../../components/reviewCard/reviewCard';
 
 export const calculateJobCostDetails = item => {
   let jobSubTotal = 0;
@@ -98,7 +98,7 @@ const OnGoingGroupDetail = ({route}) => {
     return true;
   };
 
-  const generatePDF = async () => {
+  const handleGeneratePDF = async () => {
     try {
       const hasPermission = await requestWritePermission();
       if (!hasPermission) {
@@ -112,155 +112,112 @@ const OnGoingGroupDetail = ({route}) => {
       const {qstAmount, gstAmount, grandTotal} = costDetails;
 
       const additionalChargesHTML = `
-  <div class="section">
-    <p class="title" style="text-align: center; margin-top: 10px;">Additional Charges</p>
-    ${
-      item?.extraCost?.length > 0
-        ? item.extraCost
-            .map(cost => {
-              const amount = parseFloat(cost?.number || 0).toFixed(2);
-              return `
-                <div class="detail" style="font-weight: bold;">
-                  <span>${cost?.text}</span>
-                  <span>$${amount}</span>
-                </div>
-              `;
-            })
-            .join('')
-        : `
-          <p style="text-align: center; margin-top: 10px; font-size: 14px; color: gray;">
-            No Additional Charges Included.
-          </p>
-        `
-    }
-    <div class="detail" style="font-weight: bold;">
-      <span>QST</span>
-      <span>$${qstAmount?.toFixed(3)}</span>
-    </div>
-    <div class="detail" style="font-weight: bold;">
-      <span>GST</span>
-      <span>$${gstAmount?.toFixed(2)}</span>
-    </div>
-    <div class="detail" style="font-weight: bold; font-size: 16px;">
-      <span>Grand Total</span>
-      <span>$${grandTotal?.toFixed(2)}</span>
-    </div>
-  </div>
-`;
+      <div class="section">
+        <p class="title" style="text-align: center; margin-top: 10px;">Additional Charges</p>
+        ${
+          item?.extraCost?.length > 0
+            ? item.extraCost
+                .map(cost => {
+                  const amount = parseFloat(cost?.number || 0).toFixed(2);
+                  return `
+                    <div class="detail" style="font-weight: bold;">
+                      <span>${cost?.text}</span>
+                      <span>$${amount}</span>
+                    </div>
+                  `;
+                })
+                .join('')
+            : `
+              <p style="text-align: center; margin-top: 10px; font-size: 14px; color: gray;">
+                No Additional Charges Included.
+              </p>
+            `
+        }
+        <div class="detail" style="font-weight: bold;">
+          <span>QST</span>
+          <span>$${qstAmount?.toFixed(3)}</span>
+        </div>
+        <div class="detail" style="font-weight: bold;">
+          <span>GST</span>
+          <span>$${gstAmount?.toFixed(2)}</span>
+        </div>
+        <div class="detail" style="font-weight: bold; font-size: 16px;">
+          <span>Grand Total</span>
+          <span>$${grandTotal?.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
 
       const htmlContent = `
-  <html>
-    <head>
-      <style>
-  body { font-family: Arial, sans-serif; padding: 10px; margin: 0; }
-  .container {
-    max-width: 600px;
-    margin: auto;
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
-  .logo-container {
-    width: 120px;
-    height: 120px;
-    margin-left: auto;
-  }
-  .logo {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-  .details {}
-  .section {
-    margin-bottom: 10px;
-    page-break-inside: avoid;
-  }
-  .main-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .title {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  .detail {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #ccc;
-    padding: 4px 0;
-    page-break-inside: avoid;
-  }
-  .addressDetail {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    page-break-inside: avoid;
-  }
-  .span { width: 300px }
-  .job-container {
-    border: 1px solid #ccc;
-    padding: 6px;
-    margin-bottom: 6px;
-    background-color: #f9f9f9;
-    page-break-inside: avoid;
-  }
-</style>
-
-    </head>
-    <body>
-      <div class="container">
-        <div class="details">
-          <div class="main-container">
-            <div>
-              <h1>JOB DETAIL</h1>
-              <div class="section">
-                <p class="title">Status: ${item.jobStatus}</p>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 10px; margin: 0; }
+            .container { max-width: 600px; margin: auto; padding: 10px; border: 1px solid #ccc; }
+            .logo-container { width: 120px; height: 120px; margin-left: auto; }
+            .logo { width: 100%; height: 100%; object-fit: contain; }
+            .section { margin-bottom: 10px; page-break-inside: avoid; }
+            .main-container { display: flex; align-items: center; justify-content: space-between; }
+            .title { font-size: 16px; font-weight: bold; }
+            .detail { display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; padding: 4px 0; }
+            .addressDetail { display: flex; justify-content: space-between; padding: 4px 0; }
+            .span { width: 300px }
+            .job-container { border: 1px solid #ccc; padding: 6px; margin-bottom: 6px; background-color: #f9f9f9; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="main-container">
+              <div>
+                <h1>JOB DETAIL</h1>
+                <div class="section">
+                  <p class="title">Status: ${item.jobStatus}</p>
+                </div>
+              </div>
+              <div class="logo-container">
+                <img src="https://res.cloudinary.com/dofa5sctg/image/upload/v1741346233/logo_hxv1fy.jpg" class="logo"/>
               </div>
             </div>
-            <div class="logo-container">
-              <img src="https://res.cloudinary.com/dofa5sctg/image/upload/v1741346233/logo_hxv1fy.jpg" class="logo"/>
-            </div>
-          </div>
-          <div class="section">
-            ${costDetails?.jobDetails
-              ?.map(job => {
-                return `
+            
+            <div class="section">
+              ${costDetails?.jobDetails
+                ?.map(
+                  job => `
                   <div class="job-container">
                     <div class="detail"><span>Job Title:</span> <span>${job.name}</span></div>
                     <div class="detail"><span>Number Of People Required:</span> <span>${job.requiredPeoples}</span></div>
-                    <div class="detail"><span>Days:</span> <span>${job?.days}</span></div>
+                    <div class="detail"><span>Days:</span> <span>${job.days}</span></div>
                     <div class="detail"><span>Per Hour:</span> <span>$${job.hourlyRate}</span></div>
                     <div class="detail"><span>Hours Per Day:</span> <span>${job.totalHours}</span></div>
-                    <div class="detail"><span>Sub Total:</span> <span>$${job?.subTotal}</span></div>
+                    <div class="detail"><span>Sub Total:</span> <span>$${job.subTotal}</span></div>
                   </div>
-                `;
-              })
-              .join('')}
-           
-          </div>
+                `,
+                )
+                .join('')}
+            </div>
 
-          <!-- ADDITIONAL CHARGES SECTION -->
-          ${additionalChargesHTML}
+            ${additionalChargesHTML}
 
-          <div class="section">
-            <p class="title">Recipient Details</p>
-            <div class="detail">
-              <span>Name:</span> <span>${item.createdBy.firstname} ${
+            <div class="section">
+              <p class="title">Recipient Details</p>
+              <div class="detail">
+                <span>Name:</span> <span>${item.createdBy.firstname} ${
         item.createdBy.lastname
       }</span>
-            </div>
-            <div class="detail">
-              <span>Phone:</span> <span>${item.createdBy.email}</span>
-            </div>
-            <div class="addressDetail">
-              <span>Address:</span> <span class="span">${item.address}</span>
+              </div>
+              <div class="detail">
+                <span>Email:</span> <span>${item.createdBy.email}</span>
+              </div>
+              <div class="addressDetail">
+                <span>Address:</span> <span class="span">${item.address}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </body>
-  </html>
-`;
+        </body>
+      </html>
+    `;
+
+      setIsLoading(true);
 
       const pdfOptions = {
         html: htmlContent,
@@ -268,18 +225,17 @@ const OnGoingGroupDetail = ({route}) => {
         directory: 'Documents',
       };
 
-      setIsLoading(true);
+      const pdf = await generatePDF(pdfOptions);
+      console.log('Generated PDF:', pdf);
 
-      const pdf = await RNHTMLtoPDF.convert(pdfOptions);
-      if (!pdf.filePath) {
-        throw new Error('PDF generation failed: File path is undefined.');
-      }
+      if (!pdf.filePath)
+        throw new Error('PDF generation failed: filePath is undefined.');
 
       let destinationPath = '';
+      const timeStamp = new Date().getTime();
 
       if (Platform.OS === 'android') {
-        const folderPath = `${RNFS.DownloadDirectoryPath}`;
-        const timeStamp = new Date().getTime();
+        const folderPath = RNFS.DownloadDirectoryPath;
         const fileName = `Jobs_details_invoice_${timeStamp}.pdf`;
         destinationPath = `${folderPath}/${fileName}`;
 
@@ -288,8 +244,8 @@ const OnGoingGroupDetail = ({route}) => {
         }
 
         await RNFS.copyFile(pdf.filePath, destinationPath);
-      } else if (Platform.OS === 'ios') {
-        const timeStamp = new Date().getTime();
+        console.log('Saved to Android Downloads:', destinationPath);
+      } else {
         destinationPath = `${RNFS.DocumentDirectoryPath}/Jobs_details_invoice_${timeStamp}.pdf`;
         await RNFS.moveFile(pdf.filePath, destinationPath);
 
@@ -300,11 +256,12 @@ const OnGoingGroupDetail = ({route}) => {
         });
       }
 
+      // 🔹 Step 5: Done
       setIsLoading(false);
-
-      modalRef.current.isVisible({
+      modalRef.current?.isVisible?.({
         status: 'ok',
         message: 'Your PDF has been successfully generated.',
+        path: destinationPath || pdf.filePath,
       });
     } catch (error) {
       setIsLoading(false);
@@ -625,7 +582,7 @@ const OnGoingGroupDetail = ({route}) => {
 
           {item?.paymentStatus == 'Paid' && (
             <Button
-              handlePressBtn={generatePDF}
+              handlePressBtn={handleGeneratePDF}
               btnFontSize={12}
               btnTitle={'Download Invoice'}
               btnTextStyle={{
