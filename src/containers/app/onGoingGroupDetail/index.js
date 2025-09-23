@@ -234,8 +234,8 @@ const OnGoingGroupDetail = ({route}) => {
       let destinationPath = '';
       const timeStamp = new Date().getTime();
 
+      const folderPath = RNFS.DownloadDirectoryPath;
       if (Platform.OS === 'android') {
-        const folderPath = RNFS.DownloadDirectoryPath;
         const fileName = `Jobs_details_invoice_${timeStamp}.pdf`;
         destinationPath = `${folderPath}/${fileName}`;
 
@@ -260,7 +260,7 @@ const OnGoingGroupDetail = ({route}) => {
       setIsLoading(false);
       modalRef.current?.isVisible?.({
         status: 'ok',
-        message: 'Your PDF has been successfully generated.',
+        message: `Your PDF has been successfully generated. to ${folderPath} `,
         path: destinationPath || pdf.filePath,
       });
     } catch (error) {
