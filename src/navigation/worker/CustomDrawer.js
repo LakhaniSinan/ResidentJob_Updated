@@ -18,12 +18,13 @@ const WorkerCustomDrawer = ({navigation}) => {
   const WorkerDrawerArray = [
     {
       label: 'Home',
-      onPress: () => navigation.navigate('FindStack'),
+      onPress: () => navigation.navigate('HomeBottom'),
       tabIcon: appIcons.drawerHome,
     },
     {
       label: 'My Jobs',
-      onPress: () => navigation.navigate('OnGoingHistoryStack'),
+      onPress: () =>
+        navigation.navigate('HomeBottom', {screen: 'OnGoingHistoryStack'}),
       tabIcon: appIcons.myJobs,
     },
     // {
@@ -48,7 +49,8 @@ const WorkerCustomDrawer = ({navigation}) => {
     // },
     {
       label: 'Profile',
-      onPress: () => navigation.navigate('SettingsStack'),
+      onPress: () =>
+        navigation.navigate('HomeBottom', {screen: 'SettingsStack'}),
       tabIcon: appIcons.accountIcon,
     },
   ];

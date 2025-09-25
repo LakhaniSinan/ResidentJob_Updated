@@ -20,7 +20,7 @@ const CustomerCustomDrawer = ({navigation}) => {
   const iconsToRender = [
     {
       label: 'Home',
-      onPress: () => navigation.navigate('Home'),
+      onPress: () => navigation.navigate('HomeBottom'),
       tabIcon: appIcons.drawerHome,
     },
     // {
@@ -35,7 +35,10 @@ const CustomerCustomDrawer = ({navigation}) => {
     // },
     {
       label: 'My Jobs',
-      onPress: () => navigation.navigate('OnGoingHistoryStack'),
+      onPress: () =>
+        navigation.navigate('HomeBottom', {
+          screen: 'OnGoingHistoryStack',
+        }),
       tabIcon: appIcons.onGoing,
     },
     {
@@ -43,21 +46,12 @@ const CustomerCustomDrawer = ({navigation}) => {
       onPress: () => navigation.navigate('ChatWithAdmin'),
       tabIcon: appIcons.massegeIcon,
     },
-    // {
-    //   label: 'History',
-    //   onPress: () => navigation.navigate('OnGoingHistoryStack'),
-    //   tabIcon: appIcons.onGoing,
-    // },
-    // {
-    //   label: 'Account',
-    //   onPress: () => navigation.navigate('Home'),
-    //   tabIcon: appIcons.walletIcon,
-    // },
+
     {
       label: 'Profile',
       onPress: () =>
-        navigation.navigate('CustomerSettingsStack', {
-          screen: 'CustomerSettings',
+        navigation.navigate('HomeBottom', {
+          screen: 'CustomerSettingsStack',
         }),
       tabIcon: appIcons.accountIcon,
     },
@@ -117,20 +111,24 @@ const CustomerCustomDrawer = ({navigation}) => {
       </View>
 
       <View style={styles.menuItems}>
-        {iconsToRender.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}>
-            <Image
-              source={item.tabIcon}
-              style={{height: width(6), width: width(6)}}
-              resizeMode="contain"
-              tintColor={'#000'}
-            />
-            <Text style={styles.menuText}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {user?.token && (
+          <>
+            {iconsToRender.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.menuItem}
+                onPress={item.onPress}>
+                <Image
+                  source={item.tabIcon}
+                  style={{height: width(6), width: width(6)}}
+                  resizeMode="contain"
+                  tintColor={'#000'}
+                />
+                <Text style={styles.menuText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
       </View>
 
       {user?.token ? (

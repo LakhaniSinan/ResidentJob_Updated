@@ -1,33 +1,32 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import Entypo from '@react-native-vector-icons/entypo';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
 import {
-  Alert,
   Image,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  ScrollView,
   View,
 } from 'react-native';
-import { width } from 'react-native-dimension';
+import {width} from 'react-native-dimension';
 import ImagePicker from 'react-native-image-crop-picker';
-import Entypo from '@react-native-vector-icons/entypo';
-import { useDispatch, useSelector } from 'react-redux';
-import { appIcons, fontFamily } from '../../../assets';
+import {useDispatch, useSelector} from 'react-redux';
+import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
 import PhoneInputComponent from '../../../components/phoneInput';
 import InputField from '../../../components/textInput';
-import { appColors } from '../../../constants';
-import { setUserData } from '../../../redux/slices/Login';
-import { getUserProfile } from '../../../services/authentication';
-import { updateProfile } from '../../../services/home';
+import {appColors} from '../../../constants';
+import {setUserData} from '../../../redux/slices/Login';
+import {getUserProfile} from '../../../services/authentication';
+import {updateProfile} from '../../../services/home';
 
-const Settings = ({ route }) => {
+const Settings = ({route}) => {
   const constants = useRef(null);
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState('');
@@ -37,6 +36,8 @@ const Settings = ({ route }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const user = data?.userDetails;
+
+  console.log(user, 'useruseruseruseruseruser');
 
   const [inputs, setInputs] = useState({
     userId: '',
@@ -147,18 +148,18 @@ const Settings = ({ route }) => {
   };
 
   const handlePress = () => {
-    const { 
-      area, 
-      contact, 
-      email, 
-      hourlyRate, 
-      location, 
-      firstname, 
+    const {
+      area,
+      contact,
+      email,
+      hourlyRate,
+      location,
+      firstname,
       lastname,
       neqnumber,
       legalname,
       personalResponsible,
-      address
+      address,
     } = inputs;
     let params = {
       firstname,
@@ -172,25 +173,30 @@ const Settings = ({ route }) => {
       neqnumber,
       legalname,
       personalResponsible,
-      address
+      address,
+      type: user?.role,
     };
     setIsLoading(true);
     updateProfile(params, inputs.userId)
       .then(response => {
         if (response.status === 201 || response.status === 200) {
-          Alert.alert(response.data.message);
-          // constants.current.isVisible({
-          //   status: 'ok',
-          //   message: response.data.message,
-          //   handlePressOk: () => {
-          //     constants.current.backdropPress();
-          //   },
-          // });
+          constants.current.isVisible({
+            status: 'ok',
+            message: response.data.message,
+            handlePressOk: () => {
+              constants.current.backdropPress();
+              dispatch(setUserData(response?.data?.daata));
+              AsyncStorage.setItem(
+                'userData',
+                JSON.stringify(response?.data?.daata),
+              );
+            },
+          });
         } else {
-          // constants.current.isVisible({
-          //   status: 'error',
-          //   message: response.data.message,
-          // });
+          constants.current.isVisible({
+            status: 'error',
+            message: response.data.message,
+          });
         }
       })
       .catch(error => {
@@ -219,7 +225,7 @@ const Settings = ({ route }) => {
   const cancelDeleteAccount = () => {
     setShowDeleteConfirm(false);
   };
-  const handleLogout = () => { };
+  const handleLogout = () => {};
 
   const onDeleteSuccess = () => {
     setShowDeleteSuccess(false);
@@ -230,17 +236,17 @@ const Settings = ({ route }) => {
   };
   const renderProfileContent = () => {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
+      <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
         <Loader isLoading={isLoading} />
         <AppHeader
           height={width(20)}
           heading={'Profile Screen'}
           headingColor={appColors.white}
-          leftIconStyle={{ height: 27, width: 27 }}
+          leftIconStyle={{height: 27, width: 27}}
           leftIcon={appIcons.drawerIcon}
           isDrawer={true}
         />
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{flex: 1}}>
           <View
             style={{
               alignItems: 'center',
@@ -259,7 +265,7 @@ const Settings = ({ route }) => {
               }}>
               <Image
                 source={
-                  profileImage ? { uri: profileImage } : appIcons.accountIcon
+                  profileImage ? {uri: profileImage} : appIcons.accountIcon
                 }
                 resizeMode="cover"
                 style={{
@@ -275,7 +281,7 @@ const Settings = ({ route }) => {
               </TouchableOpacity>
             </View>
           </View>
-          <View style={{ paddingHorizontal: width(4) }}>
+          <View style={{paddingHorizontal: width(4)}}>
             <Text
               style={{
                 fontFamily: fontFamily.poppinsSemiBold,
@@ -285,7 +291,7 @@ const Settings = ({ route }) => {
               }}>
               Basic Information
             </Text>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <InputField
                 inputLabel="First Name"
                 placeholder="Enter your first name"
@@ -293,7 +299,7 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('firstname', value)}
               />
             </View>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <InputField
                 inputLabel="Last Name"
                 placeholder="Enter your last name"
@@ -301,7 +307,7 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('lastname', value)}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={inputs.legalname}
                 placeholder="Legal Name"
@@ -309,18 +315,18 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('legalname', value)}
               />
             </View>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <InputField
                 isEditable={false}
                 inputLabel="Email"
                 value={inputs.email}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={inputs.neqnumber ? inputs.neqnumber.toString() : ''}
                 placeholder="NEQ Number"
-                keyboardType='number-pad'
+                keyboardType="number-pad"
                 placeholderTextColor={appColors.gray}
                 onChangeText={value => onChangeText('neqnumber', value)}
               />
@@ -335,15 +341,17 @@ const Settings = ({ route }) => {
                 })
               }
             />
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Personal Responsible'}
                 placeholderTextColor={appColors.gray}
                 value={inputs.personalResponsible}
-                onChangeText={value => onChangeText('personalResponsible', value)}
+                onChangeText={value =>
+                  onChangeText('personalResponsible', value)
+                }
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Address'}
                 placeholderTextColor={appColors.gray}
@@ -352,7 +360,7 @@ const Settings = ({ route }) => {
               />
             </View>
             {user?.loginType != 'Google' && user?.loginType != 'Apple' && (
-              <View style={{ marginTop: width(4) }}>
+              <View style={{marginTop: width(4)}}>
                 <Button
                   btnTitle={'Change Password'}
                   btnTextStyle={{
@@ -368,7 +376,7 @@ const Settings = ({ route }) => {
               </View>
             )}
 
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <Button
                 btnTitle={'Update'}
                 btnTextStyle={{
@@ -384,7 +392,7 @@ const Settings = ({ route }) => {
               />
             </View>
 
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <Button
                 btnTitle={'Delete Account'}
                 btnTextStyle={{
@@ -401,7 +409,7 @@ const Settings = ({ route }) => {
               />
             </View>
           </View>
-          <View style={{ height: width(14) }} />
+          <View style={{height: width(14)}} />
         </ScrollView>
 
         {/* Delete Account Confirmation Modal */}
