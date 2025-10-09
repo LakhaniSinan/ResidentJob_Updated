@@ -28,6 +28,10 @@ const WelcomeScreens = () => {
     dispatch(setUserData(dummyData));
   };
 
+
+  console.log("hahaahaahha");
+  
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: appColors.primaryColor}}>
       <ImageBackground
@@ -81,7 +85,7 @@ const WelcomeScreens = () => {
               fontFamily: fontFamily.poppinsBold,
               color: appColors.black,
             }}>
-            Login As Worker
+            Login As Worker 
           </Text>
         </TouchableOpacity>
       </ImageBackground>
