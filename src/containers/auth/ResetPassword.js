@@ -1,4 +1,4 @@
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useRef, useState} from 'react';
 import {Alert, SafeAreaView, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
@@ -15,7 +15,7 @@ import AppHeader from '../../components/appHeader';
 
 const ResetPassword = () => {
   const route = useRoute();
-  console.log(route, 'routerouterouteroute');
+  console.log(route?.params?.type, 'routerouterouteroute');
 
   const modalRef = useRef();
   const email = route.params?.email || '';
@@ -48,24 +48,33 @@ const ResetPassword = () => {
     setIsLoading(true);
     ChangePassword(params)
       .then(response => {
+        console.log(response, 'responseresponseresponseresponse');
+
         if (response.status === 200) {
           modalRef.current.isVisible({
             status: 'ok',
             message: response.data.message,
             handlePressOk: () => {
-              navigation.navigate('WelcomeScreens');
+              modalRef.current.backdropPress();
+              navigation.pop(2);
+              // navigation.dispatch(
+              //   CommonActions.reset({
+              //     index: 0,
+              //     routes: [
+              //       {
+              //         name: 'Login',
+              //         params: {type: route?.params?.type}, // 👈 params always go here
+              //       },
+              //     ],
+              //   }),
+              // );
             },
           });
-          console.log('Success', 'Password updated successfully.');
         } else {
           modalRef.current.isVisible({
             status: 'error',
-            message: response.data.message,
+            message: response.data.error || response.data.message,
           });
-          console.log(
-            'Error',
-            response?.data?.message || 'Failed to update password.',
-          );
         }
       })
       .catch(error => {

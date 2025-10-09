@@ -40,14 +40,20 @@ const SearchScreen = ({route}) => {
   const [openDatePicker, setOpenDatePicker] = useState({type: '', index: null});
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardVisible(false));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const showSub = Keyboard.addListener('keyboardDidShow', () =>
+        setIsKeyboardVisible(true),
+      );
+      const hideSub = Keyboard.addListener('keyboardDidHide', () =>
+        setIsKeyboardVisible(false),
+      );
+      return () => {
+        showSub.remove();
+        hideSub.remove();
+      };
+    }, []),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -626,15 +632,16 @@ const SearchScreen = ({route}) => {
     );
   };
 
-  useEffect(() => {
-    renderContent();
-  }, [user]);
+  // Redirect only when screen is focused to avoid triggering during other flows
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.userDetails?._id) {
+        navigation.navigate('Login', {type: 'hire'});
+      }
+    }, [user]),
+  );
 
-  const renderContent = () => {
-    return user?.userDetails?._id ? renderSearchContent() : handleLogin();
-  };
-
-  return <>{renderContent()}</>;
+  return <>{user?.userDetails?._id ? renderSearchContent() : null}</>;
 };
 
 export default SearchScreen;

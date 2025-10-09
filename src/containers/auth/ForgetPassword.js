@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {SafeAreaView, Text, View, Alert} from 'react-native';
 import {width} from 'react-native-dimension';
 import {appIcons, fontFamily} from '../../assets';
@@ -10,6 +10,7 @@ import {ForgotPassword} from '../../services/authentication';
 import {appColors} from '../../constants';
 import Loader from '../../components/loader';
 import AppHeader from '../../components/appHeader';
+import CommonAlert from '../../components/commanAlert';
 
 const ForgetPassword = ({route}) => {
   const {type} = route.params;
@@ -17,6 +18,7 @@ const ForgetPassword = ({route}) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const modalRef = useRef(null);
 
   const validateEmail = email => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -42,9 +44,20 @@ const ForgetPassword = ({route}) => {
 
       if (response && response.status === 200) {
         console.log('Success', 'OTP has been sent to your email.');
-        navigation.navigate('ResetPassword', {email, type});
+        modalRef.current.isVisible({
+          status: 'ok',
+          message: response?.data?.message,
+          handlePressOk: () => {
+            modalRef.current.backdropPress();
+            navigation.navigate('ResetPassword', {email, type});
+          },
+        });
       } else {
         console.log('lalalalalal');
+        modalRef.current.isVisible({
+          status: 'error',
+          message: response?.data?.message,
+        });
       }
     } catch (error) {
       setLoading(false);
@@ -98,6 +111,7 @@ const ForgetPassword = ({route}) => {
             }}
             handlePressBtn={handleSendCode}
           />
+          <CommonAlert ref={modalRef} />
         </View>
       </SafeAreaView>
     </>
