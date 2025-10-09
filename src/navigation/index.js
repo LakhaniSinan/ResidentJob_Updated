@@ -15,7 +15,7 @@ const Navigation = () => {
   const updateVar = useRef(null);
 
   useEffect(() => {
-    getAdminSettings();
+    // getAdminSettings();
   }, []);
 
   const getAdminSettings = async () => {

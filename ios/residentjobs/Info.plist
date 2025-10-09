@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>ResidentJobs</string>
+	<string>Resident Job</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
+	<string>2.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>12</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -31,8 +31,51 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+  <key>NSCameraUsageDescription</key>
+    <string>This app needs camera access to allow you to take photos for your profile and job applications.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>This app needs contacts access to help you connect with other users and share job opportunities.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs access to location to help you find nearby jobs and services.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs access to location to help you find nearby jobs and services, and to provide location-based notifications even when the app is in the background.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app needs access to location to help you find nearby jobs and services, and to provide location-based notifications even when the app is in the background.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs microphone access for voice messages.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs photo library access to allow you to select images for your profile and job applications.</string>
+    <key>NSAppleMusicUsageDescription</key>
+    <string>This app does not access your music, but we are required to request this permission due to third-party libraries.</string>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>This app needs notification access to send you important updates about your jobs and messages.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>AntDesign.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>Feather.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>FontAwesome6_Brands.ttf</string>
+		<string>FontAwesome6_Regular.ttf</string>
+		<string>FontAwesome6_Solid.ttf</string>
+		<string>Fontisto.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>Zocial.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -47,15 +90,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Poppins-Bold.ttf</string>
-		<string>Poppins-ExtraBold.ttf</string>
-		<string>Poppins-ExtraLight.ttf</string>
-		<string>Poppins-Light.ttf</string>
-		<string>Poppins-Medium.ttf</string>
-		<string>Poppins-Regular.ttf</string>
-		<string>Poppins-SemiBold.ttf</string>
-	</array>
 </dict>
 </plist>
