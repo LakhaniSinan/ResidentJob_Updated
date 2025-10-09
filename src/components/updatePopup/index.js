@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {Linking, Platform, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
-import RNExitApp from 'react-native-exit-app';
+import { exitApp } from '@logicwind/react-native-exit-app';
 import FastImage from 'react-native-fast-image';
 import Modal from 'react-native-modal';
 import {appImages, fontFamily} from '../../assets';
@@ -98,7 +98,7 @@ const UpdatePopUp = React.forwardRef((props, ref) => {
             <Button
               handlePressBtn={() => {
                 ModalVisibility(false);
-                RNExitApp.exitApp();
+                exitApp();
               }}
               btnFontSize={12}
               btnTitle={'Cancel'}

@@ -6,7 +6,18 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, min_ios_version_supported
+
+  pod 'Firebase', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
+  
 prepare_react_native_project!
+
+require_relative '../node_modules/react-native-permissions/scripts/setup'
+setup_permissions([
+  'Notifications'
+])
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil

@@ -1,5 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import messaging from '@react-native-firebase/messaging';
+import { 
+  getApp 
+} from '@react-native-firebase/app';
+import { 
+  getMessaging, 
+  getToken, 
+  requestPermission, 
+  registerDeviceForRemoteMessages, 
+  AuthorizationStatus 
+} from '@react-native-firebase/messaging';
 import {
   GoogleSignin,
   statusCodes,
@@ -37,9 +46,54 @@ import {appleAuth} from '@invertase/react-native-apple-authentication';
 import CommonAlert from '../../components/commanAlert';
 
 const Login = ({route}) => {
+
   const {type} = route?.params;
   console.log(type, 'typetypetype');
   const constants = useRef(null);
+
+const setupFCM = async () => {
+  try {
+    const app = getApp();
+    const messaging = getMessaging(app);
+
+    // 1. Register
+    await messaging.registerDeviceForRemoteMessages();
+
+    // 2. Request permission
+    const authStatus = await messaging.requestPermission({
+      sound: true,
+      badge: true,
+      alert: true,
+    });
+
+    if (
+      authStatus !== AuthorizationStatus.AUTHORIZED &&
+      authStatus !== AuthorizationStatus.PROVISIONAL
+    ) {
+      console.log("❌ Push permission not granted");
+      return null;
+    }
+
+    // 3. Delay for iOS
+    if (Platform.OS === "ios") {
+      await new Promise(res => setTimeout(res, 1000));
+    }
+
+    // 4. Get FCM token
+    const fcmToken = await messaging.getToken();
+    setInputVal({...inputVal,token:fcmToken})
+    console.log("✅ Got FCM token:", fcmToken);
+    return fcmToken;
+  } catch (e) {
+    console.log("🚨 Error in setupFCM:", e);
+    return null;
+  }
+};
+
+ useEffect(() => {
+    setupFCM();
+  }, []);
+
 
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
@@ -50,9 +104,7 @@ const Login = ({route}) => {
     password: '',
     token: '',
   });
-  useEffect(() => {
-    requestNotificationPermissions();
-  }, []);
+  
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -294,99 +346,6 @@ const Login = ({route}) => {
     }
   };
 
-  const requestNotificationPermissions = () => {
-    checkNotifications()
-      .then(({status}) => {
-        if (status !== 'granted') {
-          requestNotifications(['alert', 'sound']).then(
-            ({status: statusssss, settings}) => {
-              if (Platform.OS == 'ios') {
-                requestUserPermission();
-              } else {
-                checkPermission();
-              }
-            },
-          );
-        } else {
-          if (Platform.OS == 'ios') {
-            requestUserPermission();
-          } else {
-            checkPermission();
-          }
-        }
-      })
-      .catch(errorrrr => {
-        console.log(errorrrr, 'NOTIFICATION_ERRORRRRR');
-      });
-  };
-
-  const requestUserPermission = async () => {
-    try {
-      const authStatus = await messaging().requestPermission({
-        sound: true,
-        announcement: true,
-        badge: true,
-        carPlay: true,
-        criticalAlert: true,
-        provisional: false,
-        alert: true,
-      });
-
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-      if (enabled) {
-        console.log('Authorization status:', authStatus);
-        checkPermission();
-      } else {
-        console.log('Permission denied');
-      }
-    } catch (error) {
-      console.log('Error requesting permission:', error);
-    }
-  };
-
-  const checkPermission = async () => {
-    try {
-      let enabled = await messaging().hasPermission();
-      if (enabled) {
-        getToken();
-      } else {
-        requestUserPermission();
-      }
-    } catch (error) {
-      console.log(error, 'immmmmmmmmmmmmmmmmmmmm');
-    }
-  };
-
-  const getToken = async () => {
-    try {
-      // For iOS, wait a bit for APNS token to be set up
-      if (Platform.OS === 'ios') {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      let token = await messaging().getToken();
-      console.log(token, 'tokentokentokentoken');
-
-      if (token) {
-        setInputVal({...inputVal, token});
-      } else {
-        console.log('FCM token is null, retrying...');
-        // Retry after a short delay
-        setTimeout(() => {
-          getToken();
-        }, 2000);
-      }
-    } catch (error) {
-      console.log('Error getting FCM token:', error);
-      // Retry after a short delay on error
-      setTimeout(() => {
-        getToken();
-      }, 3000);
-    }
-  };
 
   const handleLogin = () => {
     if (inputVal.email == '' || inputVal.password == '') {
@@ -402,6 +361,7 @@ const Login = ({route}) => {
       fcm: inputVal.token,
       type,
     };
+console.log(payload, 'payloadpayloadpayload');
 
     setIsLoading(true);
     loginUser(payload)

@@ -18,7 +18,7 @@ const WorkerCustomDrawer = ({navigation}) => {
   const WorkerDrawerArray = [
     {
       label: 'Home',
-      onPress: () => navigation.navigate('HomeBottom'),
+      onPress: () => navigation.navigate('HomeBottom',{screen: 'FindStack'}),
       tabIcon: appIcons.drawerHome,
     },
     {
