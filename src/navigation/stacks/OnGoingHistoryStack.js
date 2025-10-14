@@ -1,11 +1,11 @@
 import {createStackNavigator} from '@react-navigation/stack';
-import ActiveJobsScreen from '../../containers/app/activeJobs';
 import AddPaymentMethod from '../../containers/app/addPaymentMethod';
+import JobsDirections from '../../containers/app/jobsDirections';
 import OnGoingGroupDetail from '../../containers/app/onGoingGroupDetail';
 import OnGoingHistoryDetails from '../../containers/app/onGoingHistoryDetails';
+import OnGoingHistory from '../../containers/app/onGoingJobs';
 import PaymentMethod from '../../containers/app/pymentScreen';
 import RateUsScreen from '../../containers/app/reviews';
-import OnGoingHistory from '../../containers/app/onGoingJobs';
 import TermsAndCondition from '../../containers/app/termsAndCondition';
 
 const Stack = createStackNavigator();
@@ -21,6 +21,7 @@ function OnGoingHistoryStack() {
       <Stack.Screen name="PaymentMethod" component={PaymentMethod} />
       <Stack.Screen name="TermsAndCondition" component={TermsAndCondition} />
       <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethod} />
+      <Stack.Screen name="JobsDirections" component={JobsDirections} />
       <Stack.Screen
         name="OnGoingHistoryDetails"
         component={OnGoingHistoryDetails}

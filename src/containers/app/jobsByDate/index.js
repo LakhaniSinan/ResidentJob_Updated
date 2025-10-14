@@ -165,8 +165,14 @@ const JobsByDate = ({route}) => {
             btnTextStyle={{
               color: appColors.white,
             }}
+            disabled={
+              item.jobStatus == 'Cancelled' || item.jobStatus == 'Completed'
+            }
             buttonContainer={{
-              backgroundColor: appColors.primaryColor,
+              backgroundColor:
+                item.jobStatus == 'Cancelled' || item.jobStatus == 'Completed'
+                  ? appColors?.gray
+                  : appColors.primaryColor,
               borderColor: appColors.primaryColor,
               borderWidth: 1,
               borderRadius: 12,

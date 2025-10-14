@@ -177,6 +177,7 @@ const PaymentMethod = ({route}) => {
       };
 
       const responce = await updateJobAfterPayment(item?._id, params);
+
       setIsLoading(false);
       if (responce?.status == 200 || responce?.status == 201) {
         modalRef.current.isVisible({

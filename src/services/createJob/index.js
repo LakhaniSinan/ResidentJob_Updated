@@ -25,6 +25,9 @@ export const getCalenderJobsByWorker = workerId => {
 export const updateJobStatus = (jobId, params) => {
   return Api(`${endPoints.updateJobStatus}/${jobId}`, params, requestType.POST);
 };
+export const cancelJob = (jobId, params) => {
+  return Api(`${endPoints.cancelJob}/${jobId}`, params, requestType.POST);
+};
 
 export const createJobForAdmin = params => {
   return Api(endPoints.createJobForAdmin, params, requestType.POST);

@@ -1,8 +1,8 @@
+import {exitApp} from '@logicwind/react-native-exit-app';
 import {useNavigation} from '@react-navigation/native';
 import React, {useState} from 'react';
 import {Linking, Platform, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
-import { exitApp } from '@logicwind/react-native-exit-app';
 import FastImage from 'react-native-fast-image';
 import Modal from 'react-native-modal';
 import {appImages, fontFamily} from '../../assets';
@@ -12,16 +12,12 @@ import Button from '../button';
 let propsData = {};
 
 const UpdatePopUp = React.forwardRef((props, ref) => {
-  console.log(ref, 'refrefrefrefrefref');
-
   const {handleButton} = props;
   const [isVisible, ModalVisibility] = useState(false);
   const navigation = useNavigation();
 
   React.useImperativeHandle(ref, () => ({
     isVisible(params) {
-      console.log(params, 'paramsparamsparams');
-
       propsData = params;
       ModalVisibility(true);
     },
@@ -29,8 +25,6 @@ const UpdatePopUp = React.forwardRef((props, ref) => {
       ModalVisibility(false);
     },
   }));
-
-  console.log(propsData, 'propsDatapropsDatapropsData');
 
   return (
     <Modal

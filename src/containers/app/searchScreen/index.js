@@ -324,6 +324,8 @@ const SearchScreen = ({route}) => {
 
       const groupJobResponse = await createGorupJob(params);
 
+      console.log(groupJobResponse, 'groupJobResponsegroupJobResponse');
+
       // Check if first API call succeeded
       if (groupJobResponse.status !== 200 && groupJobResponse.status !== 201) {
         setLoading(false);

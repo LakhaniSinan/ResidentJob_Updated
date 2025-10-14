@@ -24,6 +24,7 @@ import CustomCheckBox from '../../../components/customcheckBox';
 import Loader from '../../../components/loader';
 import RenderReviewCard from '../../../components/reviewCard/reviewCard';
 import {appColors} from '../../../constants';
+import {cancelJob} from '../../../services/createJob';
 import {updateJobByAdmin} from '../../../services/wallet';
 
 export const calculateJobCostDetails = item => {
@@ -73,6 +74,7 @@ export const calculateJobCostDetails = item => {
 
 const OnGoingGroupDetail = ({route}) => {
   let item = route.params;
+  console.log(item, 'itemitemitemitemitemitem123123123213123');
 
   const [isAgree, setIsAgree] = useState(false);
   const navigation = useNavigation();
@@ -338,6 +340,42 @@ const OnGoingGroupDetail = ({route}) => {
     });
   };
 
+  const handleCancelJob = async () => {
+    modalRef.current.isVisible({
+      status: 'confirm',
+      message: 'Are you sure you want to cancel this job?',
+      handlePressOk: async () => {
+        modalRef.current.backdropPress();
+        try {
+          setIsLoading(true);
+          const response = await cancelJob(item?.jobId, {
+            jobStatus: 'Cancelled',
+          });
+          setIsLoading(false);
+          if (response.status == 200 || response.status == 201) {
+            modalRef.current.isVisible({
+              status: 'ok',
+              message: response.data.message,
+              handlePressOk: () => {
+                modalRef.current.backdropPress();
+                navigation.goBack();
+              },
+            });
+          } else {
+            modalRef.current.isVisible({
+              status: 'error',
+              message: response.data.message,
+            });
+          }
+          console.log(response, 'responseresponseresponseresponse');
+        } catch (error) {
+          setIsLoading(false);
+          console.log(error, 'errorerrorerrorerror234536');
+        }
+      },
+    });
+  };
+
   return (
     <SafeAreaView>
       <ScrollView>
@@ -522,18 +560,36 @@ const OnGoingGroupDetail = ({route}) => {
             justifyContent: 'space-between',
           }}>
           {item?.jobStatus == 'Pending' && (
-            <Text
-              style={{
-                fontFamily: fontFamily.poppinsBold,
-                color: appColors.gray,
-                textAlign: 'center',
-                marginVertical: width(3),
-                width: '100%',
-              }}>
-              Please wait. You’ll be able to make a payment once the worker has
-              been assigned to you.
-            </Text>
+            <>
+              <Text
+                style={{
+                  fontFamily: fontFamily.poppinsBold,
+                  color: appColors.gray,
+                  textAlign: 'center',
+                  marginVertical: width(3),
+                  width: '100%',
+                }}>
+                Please wait. You’ll be able to make a payment once the worker
+                has been assigned to you.
+              </Text>
+              <Button
+                btnFontSize={12}
+                handlePressBtn={handleCancelJob}
+                btnTitle={'Cancel Job'}
+                btnTextStyle={{
+                  color: appColors.white,
+                }}
+                buttonContainer={{
+                  backgroundColor: appColors.primaryColor,
+                  borderColor: appColors.primaryColor,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  paddingVertical: width(3),
+                }}
+              />
+            </>
           )}
+
           {item?.jobStatus == 'Accepted' &&
             item?.paymentStatus == 'Pending' && (
               <>

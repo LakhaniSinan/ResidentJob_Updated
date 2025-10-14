@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {width} from 'react-native-dimension';
@@ -206,6 +207,10 @@ const OnGoingHistoryDetails = ({route}) => {
     jobStatus !== 'Completed' &&
     isWithinDateRange;
 
+  const handleNavigateToDirections = () => {
+    navigation.navigate('JobsDirections', historyDetails);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader
@@ -234,6 +239,29 @@ const OnGoingHistoryDetails = ({route}) => {
           <View style={{padding: width(3)}}>
             <Text style={styles.detailTitle}>Location</Text>
             <View style={styles.mapContainer}>
+              <TouchableOpacity
+                onPress={handleNavigateToDirections}
+                style={{
+                  position: 'absolute',
+                  zIndex: 9,
+                  height: width(8),
+                  width: width(30),
+                  bottom: 10,
+                  right: 10,
+                  backgroundColor: appColors.lightMehroon,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 10,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.poppinsBold,
+                    fontSize: 12,
+                    color: appColors.white,
+                  }}>
+                  Directions
+                </Text>
+              </TouchableOpacity>
               <MapView
                 style={styles.map}
                 region={{
@@ -446,6 +474,7 @@ const styles = StyleSheet.create({
     borderColor: appColors.platinum,
     borderWidth: 1,
     overflow: 'hidden',
+    position: 'relative',
   },
   map: {
     ...StyleSheet.absoluteFillObject,
