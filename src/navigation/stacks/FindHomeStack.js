@@ -12,6 +12,7 @@ import AllFoodByCategory from '../../containers/app/allFoodByCategory';
 import Chat from '../../containers/app/message';
 import ChatBox from '../../containers/app/message/ChatBox';
 import JobsByDate from '../../containers/app/jobsByDate';
+import JobsDirections from '../../containers/app/jobsDirections';
 
 const Stack = createStackNavigator();
 

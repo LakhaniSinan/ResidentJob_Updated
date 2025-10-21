@@ -6,8 +6,11 @@ import {useSelector} from 'react-redux';
 import {fontFamily} from '../../assets';
 import {appColors} from '../../constants';
 import Button from '../button';
+import moment from 'moment';
 
 const GroupJobCard = ({item, heading}) => {
+  console.log(item, 'itemitemitemitem');
+
   const {user} = useSelector(state => state.LoginSlice);
   const navigation = useNavigation();
   const onDetailPress = () => {
@@ -30,6 +33,19 @@ const GroupJobCard = ({item, heading}) => {
           marginHorizontal: 10,
           marginVertical: 10,
         }}>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
+            Created At
+          </Text>
+          <Text
+            style={{
+              marginLeft: 10,
+              color: 'black',
+              fontFamily: fontFamily.poppinsBold,
+            }}>
+            {moment(item?.createdAt).format('MMM/DD/YYYY')}
+          </Text>
+        </View>
         <View style={{flexDirection: 'row'}}>
           <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
             Job Status:

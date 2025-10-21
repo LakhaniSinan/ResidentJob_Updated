@@ -59,7 +59,7 @@ const educationLevel = [
 ];
 const ProfileScreen = () => {
   const dispatch = useDispatch();
-  const constants = useRef();
+  const constants = useRef(null);
   const jobPickerRef = useRef();
   const genderRef = useRef();
   const {user} = useSelector(state => state.LoginSlice);
@@ -596,13 +596,10 @@ const ProfileScreen = () => {
           }));
         }
 
-        Alert.alert('Image uploaded successfully!', responce);
-
-        // Show success message
-        // constants.current.isVisible({
-        //   status: 'ok',
-        //   message: 'Image uploaded successfully!',
-        // });
+        constants.current.isVisible({
+          status: 'ok',
+          message: 'Image uploaded successfully!',
+        });
       } else {
         console.log('No response received from upload service');
         Alert.alert('Error', 'Failed to upload image. No response received.');

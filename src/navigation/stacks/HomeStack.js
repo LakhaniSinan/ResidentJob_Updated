@@ -1,17 +1,17 @@
 import {createStackNavigator} from '@react-navigation/stack';
+import ActiveJobsScreen from '../../containers/app/activeJobs';
+import AddPaymentMethod from '../../containers/app/addPaymentMethod';
 import AllCategory from '../../containers/app/allCategory';
 import CategoryDetails from '../../containers/app/categoryDetails';
 import ChefProfiles from '../../containers/app/chefProfiles';
 import Home from '../../containers/app/home';
 import Chat from '../../containers/app/message';
+import ChatBox from '../../containers/app/message/ChatBox';
 import Notifications from '../../containers/app/notifications';
 import PaymentMethod from '../../containers/app/pymentScreen';
-import SelectionForm from '../../containers/app/selectionForm';
-import AddPaymentMethod from '../../containers/app/addPaymentMethod';
-import ChatBox from '../../containers/app/message/ChatBox';
 import SearchScreen from '../../containers/app/searchScreen';
-import TermsAndCondition from '../../containers/app/termsAndCondition';
-import ActiveJobsScreen from '../../containers/app/activeJobs';
+import SelectionForm from '../../containers/app/selectionForm';
+import JobsDirections from '../../containers/app/jobsDirections';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +33,7 @@ function HomeStack() {
       <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethod} />
       <Stack.Screen name="Chat" component={Chat} />
       <Stack.Screen name="ChatBox" component={ChatBox} />
+      <Stack.Screen name="JobsDirections" component={JobsDirections} />
     </Stack.Navigator>
   );
 }

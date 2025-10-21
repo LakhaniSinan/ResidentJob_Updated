@@ -81,7 +81,7 @@ const GooglePlacesInput = ({
       setSelectedLocation({
         ...selectedLocation,
         userAddress: item.description,
-        latLng: {latitude: lat, longitude: lng},
+        latLng: {lat, lng},
       });
 
       callApi && callApi({lat, lng});
@@ -223,10 +223,9 @@ const GooglePlacesInput = ({
           style={{
             backgroundColor: appColors.textLight,
             borderRadius: 10,
-            marginTop: width(3),
+            marginVertical: width(3),
             borderWidth: 1,
             borderColor: appColors.border,
-            maxHeight: 250,
           }}
         />
       )}

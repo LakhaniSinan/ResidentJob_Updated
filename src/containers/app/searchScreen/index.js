@@ -37,6 +37,11 @@ const SearchScreen = ({route}) => {
   const [loading, setLoading] = useState(false);
   const [jobTitles, setJobTitles] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  console.log(
+    selectedLocation,
+    'selectedLocationvselectedLocationselectedLocation',
+  );
+
   const [openDatePicker, setOpenDatePicker] = useState({type: '', index: null});
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -275,6 +280,13 @@ const SearchScreen = ({route}) => {
       return constants.current.isVisible({
         status: 'error',
         message: 'Please enter location',
+      });
+    }
+    if (!selectedLocation?.latLng?.lat || !selectedLocation?.latLng?.lng) {
+      return constants.current.isVisible({
+        status: 'error',
+        message:
+          'Please select your location again — it seems your map coordinates were reset?',
       });
     }
 

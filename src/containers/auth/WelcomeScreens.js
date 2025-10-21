@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {
+  Image,
   ImageBackground,
   SafeAreaView,
   Text,
@@ -12,6 +13,7 @@ import {useDispatch} from 'react-redux';
 import {appImages, fontFamily} from '../../assets';
 import {appColors} from '../../constants';
 import {setUserData} from '../../redux/slices/Login';
+import {View} from 'react-native';
 
 const WelcomeScreens = () => {
   const navigation = useNavigation();
@@ -28,9 +30,7 @@ const WelcomeScreens = () => {
     dispatch(setUserData(dummyData));
   };
 
-
-  console.log("hahaahaahha");
-  
+  console.log('hahaahaahha');
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: appColors.primaryColor}}>
@@ -41,53 +41,64 @@ const WelcomeScreens = () => {
           justifyContent: 'center',
           alignItems: 'center',
         }}>
-        {/* <Text
+        <View
           style={{
-            fontFamily: fontFamily.poppinsBold,
-            color: appColors.white,
+            height: width(50),
+            width: width(50),
+            borderRadius: 100,
+            overflow: 'hidden',
+            marginBottom: width(40),
           }}>
-          Sign Up with email
-        </Text> */}
+          <Image
+            source={appImages.logo}
+            resizeMode="cover"
+            style={{height: '100%', width: '100%'}}
+          />
+        </View>
 
-        <TouchableOpacity
-          onPress={handleGOTOCustomerHome}
+        <View
           style={{
-            height: width(13),
             width: '100%',
-            borderRadius: width(100),
-            alignItems: 'center',
-            marginHorizontal: width(3),
-            justifyContent: 'center',
-            backgroundColor: appColors.lightSky,
+            paddingHorizontal: width(2),
           }}>
-          <Text
+          <TouchableOpacity
+            onPress={handleGOTOCustomerHome}
             style={{
-              fontFamily: fontFamily.poppinsBold,
-              color: appColors.black,
+              height: width(13),
+              borderRadius: width(100),
+              alignItems: 'center',
+              marginHorizontal: width(3),
+              justifyContent: 'center',
+              backgroundColor: appColors.lightSky,
             }}>
-            Customer
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                fontFamily: fontFamily.poppinsBold,
+                color: appColors.black,
+              }}>
+              Customer
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Login', {type: 'worker'})}
-          style={{
-            height: width(13),
-            width: '100%',
-            borderRadius: width(100),
-            alignItems: 'center',
-            margin: width(3),
-            justifyContent: 'center',
-            backgroundColor: appColors.lightSky,
-          }}>
-          <Text
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login', {type: 'worker'})}
             style={{
-              fontFamily: fontFamily.poppinsBold,
-              color: appColors.black,
+              height: width(13),
+              borderRadius: width(100),
+              alignItems: 'center',
+              margin: width(3),
+              justifyContent: 'center',
+              backgroundColor: appColors.lightSky,
             }}>
-            Login As Worker 
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                fontFamily: fontFamily.poppinsBold,
+                color: appColors.black,
+              }}>
+              Login As Worker
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ImageBackground>
     </SafeAreaView>
   );

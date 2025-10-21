@@ -5,6 +5,7 @@ import {SafeAreaView} from 'react-native';
 import NotificationPopup from 'react-native-push-notification-popup';
 import {SafeAreaProvider, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Provider} from 'react-redux';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import CustomSplashScreen from './src/components/splashScreen';
 import {notifications} from './src/constants/variables';
 import Navigation from './src/navigation';
@@ -50,7 +51,9 @@ const App = () => {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <AppContent />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <AppContent />
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </Provider>
   );

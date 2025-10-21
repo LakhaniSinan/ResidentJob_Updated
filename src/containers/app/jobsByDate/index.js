@@ -15,10 +15,7 @@ import {updateJobByAdmin} from '../../../services/wallet';
 const JobsByDate = ({route}) => {
   const modalRef = useRef();
   const {dateString} = route?.params;
-  console.log(dateString, 'dateStringdateString');
-
   const [filteredData, setFilteredData] = useState([]);
-
   const [isRefreshing, setIsRefreshing] = useState(false);
   const {user} = useSelector(state => state.LoginSlice);
 
