@@ -1,17 +1,17 @@
-import { NavigationContainer } from '@react-navigation/native';
-import React, { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import React, {useEffect, useRef} from 'react';
+import {Platform} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 import UpdatePopUp from '../components/updatePopup';
 import ProfileScreen from '../containers/profile';
-import { getSettings } from '../services/setting';
+import {getSettings} from '../services/setting';
 import AuthStack from './authStack';
 import CustomerDrawer from './customer/CustomerDrawer';
 import WorkerDrawer from './worker/WorkerDrawer';
 
 const Navigation = () => {
-  const { user } = useSelector(state => state.LoginSlice);
+  const {user} = useSelector(state => state.LoginSlice);
   const updateVar = useRef(null);
 
   useEffect(() => {
@@ -33,10 +33,12 @@ const Navigation = () => {
   };
 
   const checkAppVersion = apiRess => {
-    console.log(apiRess,"apiRessapiRessapiRess");
-    
+    console.log(apiRess, 'apiRessapiRessapiRess');
+
     if (apiRess) {
       let result = DeviceInfo.getBuildNumber();
+
+      console.log(result, 'resultresultresult');
 
       if (Platform.OS == 'android') {
         if (Number(result) !== Number(apiRess.androidVersion)) {
