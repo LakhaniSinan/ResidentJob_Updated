@@ -15,7 +15,7 @@ const Navigation = () => {
   const updateVar = useRef(null);
 
   useEffect(() => {
-    // getAdminSettings();
+    getAdminSettings();
   }, []);
 
   const getAdminSettings = async () => {
@@ -33,6 +33,8 @@ const Navigation = () => {
   };
 
   const checkAppVersion = apiRess => {
+    console.log(apiRess,"apiRessapiRessapiRess");
+    
     if (apiRess) {
       let result = DeviceInfo.getBuildNumber();
 
