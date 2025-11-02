@@ -34,8 +34,8 @@ const GroupJobCard = ({item, heading}) => {
           marginVertical: 10,
         }}>
         <View style={{flexDirection: 'row'}}>
-          <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
-            Created At
+          <Text style={{color: 'black', fontWeight: 'bold', width: '35%'}}>
+            Job Creation Date
           </Text>
           <Text
             style={{
@@ -47,7 +47,7 @@ const GroupJobCard = ({item, heading}) => {
           </Text>
         </View>
         <View style={{flexDirection: 'row'}}>
-          <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
+          <Text style={{color: 'black', fontWeight: 'bold', width: '35%'}}>
             Job Status:
           </Text>
           <Text
@@ -63,7 +63,7 @@ const GroupJobCard = ({item, heading}) => {
           </Text>
         </View>
         <View style={{flexDirection: 'row'}}>
-          <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
+          <Text style={{color: 'black', fontWeight: 'bold', width: '35%'}}>
             Job Id:
           </Text>
           <Text style={{marginLeft: 10, color: 'black'}}>
@@ -71,7 +71,7 @@ const GroupJobCard = ({item, heading}) => {
           </Text>
         </View>
         <View style={{flexDirection: 'row'}}>
-          <Text style={{color: 'black', fontWeight: 'bold', width: '30%'}}>
+          <Text style={{color: 'black', fontWeight: 'bold', width: '35%'}}>
             Job Address:
           </Text>
           <Text style={{marginLeft: 10, color: 'black', width: '65%'}}>
