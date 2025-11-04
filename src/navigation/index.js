@@ -39,7 +39,8 @@ const Navigation = () => {
       let result = DeviceInfo.getBuildNumber();
 
       console.log(result, 'resultresultresult');
-
+      console.log(result,apiRess,"VADAS");
+      
       if (Platform.OS == 'android') {
         if (Number(result) !== Number(apiRess.androidVersion)) {
           updateVar.current.isVisible(apiRess);

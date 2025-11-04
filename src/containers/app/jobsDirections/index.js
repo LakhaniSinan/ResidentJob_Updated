@@ -10,8 +10,10 @@ import {appColors} from '../../../constants';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAvPVhgFVY2qv4c6kvukvIP2krPJe9dZGA';
 
-const JobsDirections = ({route}) => {
+const JobsDirections = ({route,navigation}) => {
   const {params} = route;
+  console.log(params,"paramsparamsparams");
+  
   const jobLat = parseFloat(params?.latitude);
   const jobLng = parseFloat(params?.longitude);
 
@@ -19,42 +21,45 @@ const JobsDirections = ({route}) => {
   const [currentLocation, setCurrentLocation] = useState(null);
 
   useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          getCurrentLocation();
-        } else {
-          console.log('Location permission denied');
-        }
-      } else {
-        getCurrentLocation();
-      }
-    };
-
-    const getCurrentLocation = () => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          setCurrentLocation({latitude, longitude});
-          setRegion({
-            latitude,
-            longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          });
-        },
-        error => {
-          console.log(error);
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      await Geolocation.requestAuthorization('whenInUse');
+      getCurrentLocation();
+    } else {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
-    };
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) getCurrentLocation();
+    }
+  };
 
-    requestLocationPermission();
-  }, []);
+const getCurrentLocation = () => {
+  Geolocation.getCurrentPosition(
+    position => {
+      const { latitude, longitude } = position.coords;
+
+      setCurrentLocation({ latitude, longitude });
+
+      // ✅ SET REGION HERE
+      setRegion({
+        latitude,
+        longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    },
+    error => console.log("Location Error:", error),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+};
+
+
+  requestLocationPermission();
+}, []);
+
+
+  console.log(currentLocation,"currentLocationcurrentLocation");
+  
 
   return (
     <View style={styles.container}>
@@ -64,6 +69,7 @@ const JobsDirections = ({route}) => {
         leftIconStyle={{width: width(5), height: width(5)}}
         heading={'Directions'}
         height={width(20)}
+        // onLeftPress={()=>navigation.navigate("")}
       />
       {region && (
         <MapView
