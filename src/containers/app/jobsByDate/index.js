@@ -34,7 +34,7 @@ const JobsByDate = ({route}) => {
 
       if (response?.status === 200 || response?.status === 201) {
         const data = response?.data?.jobs;
-        setFilteredData(data.reverse());
+        setFilteredData(data);
       }
     } catch (error) {
       console.log('🚀 ~ fetchJobData ~ error:', error);

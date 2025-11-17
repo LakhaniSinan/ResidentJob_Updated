@@ -1,10 +1,10 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { width } from 'react-native-dimension';
-import { fontFamily } from '../../assets';
-import { appColors } from '../../constants';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {width} from 'react-native-dimension';
+import {fontFamily} from '../../assets';
+import {appColors} from '../../constants';
 
-const CategoryCard = ({ item, index, type, handleClickCategory }) => {
+const CategoryCard = ({item, index, type, handleClickCategory}) => {
   return (
     <TouchableOpacity
       onPress={() => handleClickCategory(item)}
@@ -15,14 +15,14 @@ const CategoryCard = ({ item, index, type, handleClickCategory }) => {
         borderWidth: 0.5,
         padding: 10,
         borderRadius: 10,
-        flexDirection: "row"
+        flexDirection: 'row',
       }}>
       <Text
         style={{
           fontFamily: fontFamily.poppinsBold,
           color: appColors.black,
         }}>
-        {item?.name}  (${item.price})
+        {item?.name} {/* (${item.price}) */}
       </Text>
     </TouchableOpacity>
   );

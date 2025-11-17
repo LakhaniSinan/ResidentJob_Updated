@@ -9,10 +9,9 @@ import Button from '../button';
 import moment from 'moment';
 
 const GroupJobCard = ({item, heading}) => {
-  console.log(item, 'itemitemitemitem');
-
   const {user} = useSelector(state => state.LoginSlice);
   const navigation = useNavigation();
+
   const onDetailPress = () => {
     navigation.navigate(
       user?.userDetails?.role == 'worker'

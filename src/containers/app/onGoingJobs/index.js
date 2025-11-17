@@ -36,11 +36,10 @@ const OnGoingHistory = ({route}) => {
         user?.userDetails?.role !== 'hire'
           ? await fetchWorkerGroupJobs(user?.userDetails?._id)
           : await fetchGroupJobs(user?.userDetails?._id);
-
       if (response?.status === 200 || response?.status === 201) {
         let data = response.data?.data;
 
-        setFilteredData(data.reverse());
+        setFilteredData(data);
       }
     } catch (error) {
       console.log('🚀 ~ fetchJobData ~ error:', error);

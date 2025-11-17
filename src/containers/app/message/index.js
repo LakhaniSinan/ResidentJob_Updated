@@ -40,7 +40,7 @@ const Chat = ({route}) => {
 
       if (response?.status === 200 || response?.status === 201) {
         const data = response.data?.data || [];
-        setFilteredData(data.reverse());
+        setFilteredData(data);
       }
     } catch (error) {
       setIsLoading(false);

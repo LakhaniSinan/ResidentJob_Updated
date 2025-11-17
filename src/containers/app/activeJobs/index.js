@@ -30,7 +30,7 @@ const ActiveJobsScreen = ({route}) => {
 
       if (response?.status === 200 || response?.status === 201) {
         let data = response.data?.data || [];
-        setFilteredData(data.reverse());
+        setFilteredData(data);
       }
     } catch (error) {
       console.log('🚀 ~ fetchJobData ~ error:', error);

@@ -33,15 +33,10 @@ const SearchScreen = ({route}) => {
   const {user} = useSelector(state => state.LoginSlice);
   const navigation = useNavigation();
   const [settings, setSettings] = useState(null);
-
+  const [promo, setPromo] = useState('');
   const [loading, setLoading] = useState(false);
   const [jobTitles, setJobTitles] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  console.log(
-    selectedLocation,
-    'selectedLocationvselectedLocationselectedLocation',
-  );
-
   const [openDatePicker, setOpenDatePicker] = useState({type: '', index: null});
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -316,9 +311,7 @@ const SearchScreen = ({route}) => {
           ...item,
         };
       });
-      console.log(totalAmount, 'selectedJobsselectedJobsselectedJobs');
 
-      // return
       let params = {
         job: newArra,
         address: selectedLocation?.userAddress,
@@ -330,6 +323,7 @@ const SearchScreen = ({route}) => {
         totalCost: totalAmount,
         qst: settings.qst,
         gst: settings.gst,
+        promoCode: promo,
       };
 
       setLoading(true);
@@ -607,6 +601,14 @@ const SearchScreen = ({route}) => {
                 selectedLocation={selectedLocation}
                 setSelectedLocation={setSelectedLocation}
                 placeholder="Select your locations"
+              />
+              <Text style={styles.labelBold}>Promo Code.</Text>
+              <InputField
+                placeholder="enter promo code."
+                placeholderTextColor={appColors.gray}
+                keyboardType="numeric"
+                value={promo}
+                onChangeText={setPromo}
               />
             </View>
           }

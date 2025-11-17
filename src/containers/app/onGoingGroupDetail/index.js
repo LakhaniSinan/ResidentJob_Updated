@@ -51,7 +51,42 @@ export const calculateJobCostDetails = item => {
     return acc + (parseFloat(cost?.number) || 0);
   }, 0);
 
-  const taxableAmount = jobSubTotal + extraCostTotal;
+  // Promo handling: support different promo shapes from backend
+  // Priority: item.discountValue/discountType, item.appliedPromo, item.promoUsed, item.promoAmount, item.promo
+  const rawPromoValue =
+    item?.discountValue ??
+    item?.appliedPromo?.discountAmount ??
+    item?.appliedPromo?.discountValue ??
+    item?.promoAmount ??
+    item?.promo?.amount ??
+    item?.promoUsed?.discountValue ??
+    0;
+  const discountType =
+    item?.discountType ||
+    item?.appliedPromo?.discountType ||
+    item?.promo?.discountType ||
+    item?.promoUsed?.discountType ||
+    'flat';
+
+  // initial taxable amount before promo
+  const beforePromoTaxable = jobSubTotal + extraCostTotal;
+
+  let promoAmount = 0;
+  if (rawPromoValue) {
+    const parsedValue = parseFloat(rawPromoValue) || 0;
+    if (discountType === 'percentage' || discountType === 'percent') {
+      promoAmount = (beforePromoTaxable * parsedValue) / 100;
+    } else {
+      // treat as flat amount
+      promoAmount = parsedValue;
+    }
+  }
+
+  // ensure promo does not exceed subtotal
+  if (promoAmount > beforePromoTaxable) promoAmount = beforePromoTaxable;
+
+  // taxable amount after applying promo
+  const taxableAmount = Math.max(0, beforePromoTaxable - promoAmount);
 
   const qstPercentage = parseFloat(item?.qst || 0);
   const gstPercentage = parseFloat(item?.gst || 0);
@@ -66,6 +101,7 @@ export const calculateJobCostDetails = item => {
     jobSubTotal,
     extraCostTotal,
     taxableAmount,
+    promoAmount,
     qstAmount,
     gstAmount,
     grandTotal,
@@ -85,6 +121,7 @@ const OnGoingGroupDetail = ({route}) => {
   const [loading, setLoading] = useState(null);
 
   const costDetails = calculateJobCostDetails(item);
+  const promoAmount = parseFloat(costDetails?.promoAmount || 0);
 
   const requestWritePermission = async () => {
     if (Platform.OS === 'android' && Platform.Version < 29) {
@@ -111,7 +148,15 @@ const OnGoingGroupDetail = ({route}) => {
         return;
       }
 
-      const {qstAmount, gstAmount, grandTotal} = costDetails;
+      const {
+        qstAmount,
+        gstAmount,
+        grandTotal,
+        jobSubTotal,
+        extraCostTotal,
+        promoAmount,
+        taxableAmount,
+      } = costDetails;
 
       const additionalChargesHTML = `
       <div class="section">
@@ -136,16 +181,31 @@ const OnGoingGroupDetail = ({route}) => {
             `
         }
         <div class="detail" style="font-weight: bold;">
+          <span>Sub Total</span>
+          <span>$${(jobSubTotal || 0).toFixed(2)}</span>
+        </div>
+        ${
+          promoAmount > 0
+            ? `<div class="detail" style="font-weight: bold;"><span>Promo</span><span>-$${promoAmount.toFixed(2)}${
+                item?.appliedPromo?.code ? ' (' + item.appliedPromo.code + ')' : ''
+              }</span></div>`
+            : ''
+        }
+        <div class="detail" style="font-weight: bold;">
+          <span>Taxable Amount</span>
+          <span>$${(taxableAmount || 0).toFixed(2)}</span>
+        </div>
+        <div class="detail" style="font-weight: bold;">
           <span>QST</span>
-          <span>$${qstAmount?.toFixed(3)}</span>
+          <span>$${(qstAmount || 0).toFixed(3)}</span>
         </div>
         <div class="detail" style="font-weight: bold;">
           <span>GST</span>
-          <span>$${gstAmount?.toFixed(2)}</span>
+          <span>$${(gstAmount || 0).toFixed(2)}</span>
         </div>
         <div class="detail" style="font-weight: bold; font-size: 16px;">
           <span>Grand Total</span>
-          <span>$${grandTotal?.toFixed(2)}</span>
+          <span>$${(grandTotal || 0).toFixed(2)}</span>
         </div>
       </div>
     `;
@@ -480,7 +540,7 @@ const OnGoingGroupDetail = ({route}) => {
                 {renderData('Hourly Rate', `$${data?.hourlyRate}`)}
                 {renderData('Total Hours', data.totalHours)}
                 {renderData('Total Days', differenceInDays)}
-                {renderData('Sub Total', `$${sum.toFixed(2)}`, 'bold')}
+                {renderData('Total', `$${sum.toFixed(2)}`, 'bold')}
                 <Text
                   style={{
                     color: appColors.black,
@@ -544,8 +604,29 @@ const OnGoingGroupDetail = ({route}) => {
               No Additional Charges Included.
             </Text>
           )}
-          {renderData('QST', `$${costDetails?.qstAmount.toFixed(3)}`, 'bold')}
-          {renderData('GST', `$${costDetails?.gstAmount.toFixed(2)}`, 'bold')}
+          {renderData(
+            'Sub Total',
+            `$${(costDetails?.jobSubTotal || 0).toFixed(2)}`,
+            'bold',
+          )}
+          {promoAmount > 0 &&
+            renderData(
+              'Promo Discount',
+              `-$${promoAmount.toFixed(2)}${
+                item?.appliedPromo?.code ? ' (' + item.appliedPromo.code + ')' : ''
+              }`,
+              'bold',
+            )}
+          {renderData(
+            'QST',
+            `$${(costDetails?.qstAmount || 0).toFixed(3)}`,
+            'bold',
+          )}
+          {renderData(
+            'GST',
+            `$${(costDetails?.gstAmount || 0).toFixed(2)}`,
+            'bold',
+          )}
           {renderData(
             'Grand Total',
             `$${costDetails?.grandTotal?.toFixed(2)}`,
