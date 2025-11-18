@@ -71,13 +71,12 @@ const Home = () => {
   const renderTopService = ({item, index}) => {
     return <TopServicesCard type={'home'} item={item} index={index} />;
   };
-
   const handleClickCategory = item => {
-    console.log(item, 'itemitemitem');
+    const jobsArray = Array.isArray(item) ? item : [item];
 
     navigation.navigate('SearchStack', {
       screen: 'SearchScreen',
-      params: item,
+      params: {job: jobsArray},
     });
   };
 
@@ -114,7 +113,8 @@ const Home = () => {
 
       const {title, body} = remoteMessage?.notification || {};
       const safeTitle = title || remoteMessage?.data?.title || 'Notification';
-      const safeBody = body || remoteMessage?.data?.body || 'You have a new message';
+      const safeBody =
+        body || remoteMessage?.data?.body || 'You have a new message';
 
       helper.notificationCall(safeTitle, safeBody, () => {
         handleNotification(remoteMessage);

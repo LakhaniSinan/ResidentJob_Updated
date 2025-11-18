@@ -186,8 +186,12 @@ const OnGoingGroupDetail = ({route}) => {
         </div>
         ${
           promoAmount > 0
-            ? `<div class="detail" style="font-weight: bold;"><span>Promo</span><span>-$${promoAmount.toFixed(2)}${
-                item?.appliedPromo?.code ? ' (' + item.appliedPromo.code + ')' : ''
+            ? `<div class="detail" style="font-weight: bold;"><span>Promo</span><span>-$${promoAmount.toFixed(
+                2,
+              )}${
+                item?.appliedPromo?.code
+                  ? ' (' + item.appliedPromo.code + ')'
+                  : ''
               }</span></div>`
             : ''
         }
@@ -436,6 +440,77 @@ const OnGoingGroupDetail = ({route}) => {
     });
   };
 
+  // const handleCancelSingleJob = async jobIdToCancel => {
+  //   modalRef.current.isVisible({
+  //     status: 'confirm',
+  //     message: 'Are you sure you want to cancel this task?',
+  //     handlePressOk: async () => {
+  //       modalRef.current.backdropPress();
+  //       try {
+  //         setIsLoading(true);
+
+  //         const updatedJobs = item?.job?.map(job => {
+  //           if (job._id === jobIdToCancel) {
+  //             return {...job, status: 'userCancelled'};
+  //           }
+  //           return job;
+  //         });
+
+  //         const allCancelled = updatedJobs.every(
+  //           j => j.status === 'userCancelled',
+  //         );
+
+  //         const finalJobStatus = allCancelled ? 'Cancelled' : item.jobStatus;
+  //         let params = {
+  //           jobStatus: finalJobStatus,
+  //           job: updatedJobs,
+  //         };
+
+  //         const response = await cancelJob(item?.jobId, params);
+
+  //         setIsLoading(false);
+
+  //         if (response.status == 200 || response.status == 201) {
+  //           modalRef.current.isVisible({
+  //             status: 'ok',
+  //             message: response.data.message,
+  //             handlePressOk: () => {
+  //               modalRef.current.backdropPress();
+  //               navigation.goBack();
+  //             },
+  //           });
+  //         } else {
+  //           modalRef.current.isVisible({
+  //             status: 'error',
+  //             message: response.data.message,
+  //           });
+  //         }
+
+  //         console.log(response, 'UPDATED JOB RESPONSE');
+  //       } catch (error) {
+  //         setIsLoading(false);
+  //         console.log(error, 'ERROR UPDATING JOB STATUS');
+  //       }
+  //     },
+  //   });
+  // };
+  // const getStatusStyle = status => {
+  //   switch (status) {
+  //     case 'Pending':
+  //       return {bg: '#FFA500', text: '#FFFFFF'}; // Orange
+  //     case 'In-Progress':
+  //       return {bg: '#1E90FF', text: '#FFFFFF'}; // Blue
+  //     case 'Completed':
+  //       return {bg: '#28A745', text: '#FFFFFF'}; // Green
+  //     case 'Cancelled':
+  //       return {bg: '#DC3545', text: '#FFFFFF'}; // Red
+  //     case 'userCancelled':
+  //       return {bg: '#6C757D', text: '#FFFFFF'}; // Gray
+  //     default:
+  //       return {bg: '#6C757D', text: '#FFFFFF'};
+  //   }
+  // };
+
   return (
     <SafeAreaView>
       <ScrollView>
@@ -527,6 +602,31 @@ const OnGoingGroupDetail = ({route}) => {
                   borderBottomWidth: item?.job.length > 1 ? 0.5 : 0,
                   marginTop: 10,
                 }}>
+                {/* <View style={{marginTop: 5, alignItems: 'flex-end'}}>
+                  {(() => {
+                    const {bg, text} = getStatusStyle(
+                      data?.status || item?.jobStatus,
+                    );
+                    return (
+                      <View
+                        style={{
+                          backgroundColor: bg,
+                          paddingHorizontal: 12,
+                          paddingVertical: 5,
+                          borderRadius: 20,
+                        }}>
+                        <Text
+                          style={{
+                            color: text,
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                          }}>
+                          {(data?.status || item?.jobStatus)?.toUpperCase()}
+                        </Text>
+                      </View>
+                    );
+                  })()}
+                </View> */}
                 {renderData('Job Title', data.name)}
                 {renderData('People Required', data.requiredPeoples)}
                 {renderData(
@@ -541,6 +641,60 @@ const OnGoingGroupDetail = ({route}) => {
                 {renderData('Total Hours', data.totalHours)}
                 {renderData('Total Days', differenceInDays)}
                 {renderData('Total', `$${sum.toFixed(2)}`, 'bold')}
+                {/* {item?.jobStatus == 'Pending' && (
+                  <>
+                    <View
+                      style={{
+                        // flexDirection: 'row',
+                        // justifyContent: 'space-between',
+                        // alignItems: 'center',
+                        marginVertical: width(4),
+                      }}>
+                     <View style={{width: width(45)}}>
+                        <Button
+                          btnFontSize={12}
+                          handlePressBtn={() =>
+                            handleCancelSingleJob(data?._id)
+                          }
+                          btnTitle={'Cancel Job'}
+                          btnTextStyle={{
+                            color: appColors.white,
+                          }}
+                          buttonContainer={{
+                            backgroundColor: appColors.primaryColor,
+                            borderColor: appColors.primaryColor,
+                            borderWidth: 1,
+                            borderRadius: 12,
+                            paddingVertical: width(3),
+                          }}
+                        />
+                      </View>
+                      <View style={{}}>
+                        <Button
+                          btnFontSize={12}
+                          handlePressBtn={() =>
+                            navigation.navigate('SearchScreen', {
+                              ...item,
+                              type: 'edit',
+                            })
+                          }
+                          btnTitle={'Edit Job'}
+                          btnTextStyle={{
+                            color: appColors.white,
+                          }}
+                          buttonContainer={{
+                            backgroundColor: appColors.primaryColor,
+                            borderColor: appColors.primaryColor,
+                            borderWidth: 1,
+                            borderRadius: 12,
+                            paddingVertical: width(3),
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </>
+                )} */}
+
                 <Text
                   style={{
                     color: appColors.black,
@@ -613,7 +767,9 @@ const OnGoingGroupDetail = ({route}) => {
             renderData(
               'Promo Discount',
               `-$${promoAmount.toFixed(2)}${
-                item?.appliedPromo?.code ? ' (' + item.appliedPromo.code + ')' : ''
+                item?.appliedPromo?.code
+                  ? ' (' + item.appliedPromo.code + ')'
+                  : ''
               }`,
               'bold',
             )}
@@ -633,26 +789,23 @@ const OnGoingGroupDetail = ({route}) => {
             'bold',
           )}
         </View>
-
-        <View
-          style={{
-            marginBottom: 20,
-            marginHorizontal: 10,
-            justifyContent: 'space-between',
-          }}>
-          {item?.jobStatus == 'Pending' && (
-            <>
-              <Text
-                style={{
-                  fontFamily: fontFamily.poppinsBold,
-                  color: appColors.gray,
-                  textAlign: 'center',
-                  marginVertical: width(3),
-                  width: '100%',
-                }}>
-                Please wait. You’ll be able to make a payment once the worker
-                has been assigned to you.
-              </Text>
+        {item?.jobStatus == 'Pending' && (
+          <>
+            <Text
+              style={{
+                fontFamily: fontFamily.poppinsBold,
+                color: appColors.gray,
+                textAlign: 'center',
+                marginVertical: width(3),
+                width: '100%',
+              }}>
+              Please wait. You’ll be able to make a payment once the worker has
+              been assigned to you.
+            </Text>
+            <View
+              style={{
+                marginHorizontal: width(4),
+              }}>
               <Button
                 btnFontSize={12}
                 handlePressBtn={handleCancelJob}
@@ -668,9 +821,36 @@ const OnGoingGroupDetail = ({route}) => {
                   paddingVertical: width(3),
                 }}
               />
-            </>
-          )}
-
+              <View style={{height: width(2)}} />
+              <Button
+                btnFontSize={12}
+                handlePressBtn={() =>
+                  navigation.navigate('SearchScreen', {
+                    ...item,
+                    type: 'edit',
+                  })
+                }
+                btnTitle={'Edit Job'}
+                btnTextStyle={{
+                  color: appColors.white,
+                }}
+                buttonContainer={{
+                  backgroundColor: appColors.primaryColor,
+                  borderColor: appColors.primaryColor,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  paddingVertical: width(3),
+                }}
+              />
+            </View>
+          </>
+        )}
+        <View
+          style={{
+            marginBottom: 20,
+            marginHorizontal: 10,
+            justifyContent: 'space-between',
+          }}>
           {item?.jobStatus == 'Accepted' &&
             item?.paymentStatus == 'Pending' && (
               <>

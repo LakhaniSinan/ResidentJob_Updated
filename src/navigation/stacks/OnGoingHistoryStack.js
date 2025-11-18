@@ -7,6 +7,7 @@ import OnGoingHistory from '../../containers/app/onGoingJobs';
 import PaymentMethod from '../../containers/app/pymentScreen';
 import RateUsScreen from '../../containers/app/reviews';
 import TermsAndCondition from '../../containers/app/termsAndCondition';
+import SearchScreen from '../../containers/app/searchScreen';
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ function OnGoingHistoryStack() {
       <Stack.Screen name="TermsAndCondition" component={TermsAndCondition} />
       <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethod} />
       <Stack.Screen name="JobsDirections" component={JobsDirections} />
+      <Stack.Screen name="SearchScreen" component={SearchScreen} />
       <Stack.Screen
         name="OnGoingHistoryDetails"
         component={OnGoingHistoryDetails}

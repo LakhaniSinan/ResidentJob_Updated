@@ -32,6 +32,9 @@ export const cancelJob = (jobId, params) => {
 export const createJobForAdmin = params => {
   return Api(endPoints.createJobForAdmin, params, requestType.POST);
 };
+export const updateJobForAdmin = params => {
+  return Api(endPoints.updateJobForAdmin, params, requestType.PUT);
+};
 
 export const fetchProviderJob = (id, params) => {
   return Api(`${endPoints.fetchProviderJob}/${id}`, params, requestType.POST);

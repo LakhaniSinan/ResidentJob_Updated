@@ -70,6 +70,8 @@ export const endPoints = {
   getSettings: '/admin/settings/fetch',
   updateJobAfterPayment: '/admin/group-jobs/update-after-payment',
   cancelJob: '/admin/group-jobs/cancel',
+  updatedJob: '/update/group-job',
+  updateJobForAdmin: '/admin/update-job',
 
   //Payment Card
   saveCard: '/card/save',

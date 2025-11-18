@@ -1,17 +1,21 @@
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import Entypo from '@react-native-vector-icons/entypo';
+import {
+  CommonActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import moment from 'moment';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   FlatList,
+  Keyboard,
   SafeAreaView,
   Text,
   TouchableOpacity,
-  Keyboard,
   View,
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import {width} from 'react-native-dimension';
-import Entypo from '@react-native-vector-icons/entypo';
 import {useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
@@ -23,12 +27,18 @@ import Loader from '../../../components/loader';
 import InputField from '../../../components/textInput';
 import {appColors} from '../../../constants';
 import {GetJobTitle} from '../../../services/authentication';
-import {createJobForAdmin} from '../../../services/createJob';
-import {createGorupJob} from '../../../services/groupJob';
+import {
+  createJobForAdmin,
+  updateJobForAdmin,
+} from '../../../services/createJob';
+import {createGorupJob, updatedJob} from '../../../services/groupJob';
 import {getSettings} from '../../../services/setting';
 import {styles} from './style';
 
 const SearchScreen = ({route}) => {
+  const item = route.params;
+  console.log(item, 'itemitemitemitemitemitemitem');
+
   const constants = useRef(null);
   const {user} = useSelector(state => state.LoginSlice);
   const navigation = useNavigation();
@@ -55,10 +65,24 @@ const SearchScreen = ({route}) => {
     }, []),
   );
 
+  useEffect(() => {
+    if (item?.type === 'edit') {
+      setSelectedLocation({
+        userAddress: item?.address,
+        latLng: {
+          lat: Number(item?.latitude),
+          lng: Number(item?.longitude),
+        },
+      });
+
+      setPromo(item?.appliedPromo ?? '');
+    }
+  }, [item]);
+
   useFocusEffect(
     useCallback(() => {
       fetchInitialData();
-    }, [route.params?._id ?? '']),
+    }, [JSON.stringify(item?.job)]),
   );
 
   useFocusEffect(
@@ -85,28 +109,51 @@ const SearchScreen = ({route}) => {
     setLoading(true);
     try {
       const response = await GetJobTitle();
-      if (response.status === 200 || response.status === 201) {
-        const selectedId = route?.params?._id || null;
 
-        setJobTitles(
-          response?.data?.data?.map(item => {
-            const isMatch = selectedId ? item._id === selectedId : false;
+      if (response.status === 200 || response.status === 201) {
+        const oldJobs = item?.job ?? [];
+        const isEdit = item?.type === 'edit';
+
+        const updated = response.data.data.map(jobItem => {
+          const match = oldJobs.find(j => j._id === jobItem._id);
+
+          if (isEdit && match) {
             return {
-              ...item,
-              isSelected: isMatch,
-              requiredPeoples: 1,
-              startDate: '',
-              endDate: '',
-              startTime: '',
-              endTime: '',
-              totalHours: '',
-              hourlyRate: String(item?.price),
+              ...jobItem,
+              isSelected: true,
+              requiredPeoples: match.requiredPeoples,
+              startDate: moment(match.startDate).format('YYYY-MM-DD'),
+              endDate: moment(match.endDate).format('YYYY-MM-DD'),
+              startTime: match.startTime,
+              endTime: match.endTime,
+              totalHours: match.totalHours,
+              hourlyRate: String(match.hourlyRate),
             };
-          }),
-        );
+          }
+
+          // --- CASE 2: HOME PAGE MODE ---
+          // Only check the job selected by the user from home page
+          const isSelectedFromHomepage = oldJobs.some(
+            j => j._id === jobItem._id,
+          );
+
+          return {
+            ...jobItem,
+            isSelected: isSelectedFromHomepage,
+            requiredPeoples: 1,
+            startDate: '',
+            endDate: '',
+            startTime: '',
+            endTime: '',
+            totalHours: '',
+            hourlyRate: String(jobItem.price), // default rate
+          };
+        });
+
+        setJobTitles(updated);
       }
-    } catch (error) {
-      console.log('Error fetching data:', error);
+    } catch (e) {
+      console.log(e);
     } finally {
       setLoading(false);
     }
@@ -126,7 +173,21 @@ const SearchScreen = ({route}) => {
         if (i === index) {
           let updatedJob = {...job};
 
-          // ✅ Check if dates are selected before allowing time selection
+          // Reset job
+          if (field === 'resetJob' && value) {
+            return {
+              ...updatedJob,
+              isSelected: false,
+              requiredPeoples: 1,
+              startDate: '',
+              endDate: '',
+              startTime: '',
+              endTime: '',
+              totalHours: '',
+            };
+          }
+
+          // Check if dates are selected before allowing time selection
           if (
             (field === 'startTime' || field === 'endTime') &&
             (!updatedJob.startDate || !updatedJob.endDate)
@@ -139,110 +200,31 @@ const SearchScreen = ({route}) => {
             return job;
           }
 
-          // ✅ Convert time to "hh:00 A" format
+          // Format startTime/endTime
           if (field === 'startTime' || field === 'endTime') {
             const formattedTime = moment(value).format('hh:00 A');
             updatedJob[field] = formattedTime;
 
-            // ✅ Reset end time when start time is changed and end time was previously selected
-            if (field === 'startTime' && updatedJob.endTime) {
+            // Reset endTime if startTime changes
+            if (field === 'startTime') {
               updatedJob.endTime = '';
               updatedJob.totalHours = '';
             }
+
+            // Calculate totalHours if both start and end time exist
+            if (updatedJob.startTime && updatedJob.endTime) {
+              let startMoment = moment(updatedJob.startTime, 'hh:mm A');
+              let endMoment = moment(updatedJob.endTime, 'hh:mm A');
+
+              if (endMoment.isBefore(startMoment)) {
+                endMoment.add(1, 'day'); // overnight handling
+              }
+
+              const totalHours = endMoment.diff(startMoment, 'hours', true);
+              updatedJob.totalHours = totalHours.toFixed(); // ✅ string or number
+            }
           } else {
             updatedJob[field] = value;
-          }
-
-          // ✅ Check time difference between startTime and endTime
-          if (field === 'endTime' && updatedJob.startTime) {
-            let startMoment = moment(updatedJob.startTime, 'hh:mm A');
-            let endMoment = moment(updatedJob.endTime, 'hh:mm A');
-
-            // Handle overnight (e.g. 9PM to 3AM next day)
-            if (endMoment.isBefore(startMoment)) {
-              // Automatically update end date to next day
-              const currentEndDate = moment(updatedJob.endDate);
-              const newEndDate = moment(updatedJob.startDate).add(1, 'day');
-
-              // Update the end date
-              updatedJob.endDate = newEndDate.format('YYYY-MM-DD');
-
-              // Show info message about automatic date update
-              setTimeout(() => {
-                constants.current.isVisible({
-                  status: 'ok',
-                  message: `End date automatically updated to ${newEndDate.format(
-                    'MM/DD/YYYY',
-                  )} due to overnight timing.`,
-                });
-              }, 100);
-
-              endMoment.add(1, 'day');
-            }
-
-            const totalHours = endMoment.diff(startMoment, 'hours', true);
-
-            if (totalHours < 6) {
-              constants.current.isVisible({
-                status: 'error',
-                message:
-                  'Minimum difference between startTime and endTime should be 6 hours',
-              });
-              return job;
-            } else {
-              updatedJob.totalHours = totalHours.toFixed();
-            }
-          }
-
-          // ✅ Check if endDate is before startDate
-          if (field === 'endDate' && updatedJob.startDate) {
-            const startDate = moment(updatedJob.startDate, 'YYYY-MM-DD');
-            const endDate = moment(value, 'YYYY-MM-DD');
-
-            if (endDate.isBefore(startDate, 'day')) {
-              constants.current.isVisible({
-                status: 'error',
-                message: 'End Date cannot be before Start Date.',
-              });
-              return job;
-            }
-
-            // ✅ Minimum 6 hour difference check with date+time
-            const startDateTime = moment(
-              `${updatedJob.startDate} ${updatedJob.startTime || '00:00 AM'}`,
-              'YYYY-MM-DD hh:mm A',
-            );
-            let endDateTime = moment(
-              `${value} ${updatedJob.endTime || '11:59 PM'}`,
-              'YYYY-MM-DD hh:mm A',
-            );
-
-            // Handle overnight shifts (if same day and end time is before start time)
-            if (
-              startDate.isSame(endDate, 'day') &&
-              updatedJob.endTime &&
-              updatedJob.startTime
-            ) {
-              const startTime = moment(updatedJob.startTime, 'hh:mm A');
-              const endTime = moment(updatedJob.endTime, 'hh:mm A');
-
-              if (endTime.isBefore(startTime)) {
-                endDateTime.add(1, 'day');
-              }
-            }
-
-            const dateDiffInHours = endDateTime.diff(
-              startDateTime,
-              'hours',
-              true,
-            );
-
-            if (dateDiffInHours < 6) {
-              alert(
-                'You cannot select this end Date. Minimum 6 hours difference required.',
-              );
-              return job;
-            }
           }
 
           return updatedJob;
@@ -255,13 +237,21 @@ const SearchScreen = ({route}) => {
   const handleAdd = async () => {
     const selectedJobs = jobTitles?.filter(job => job.isSelected);
 
+    if (!selectedJobs?.length) {
+      return constants.current?.isVisible({
+        status: 'error',
+        message: 'At least one job should be selected.',
+      });
+    }
+
     let allFieldsFilled = selectedJobs?.every(
       job =>
         job.startDate &&
         job.endDate &&
         job.startTime &&
         job.endTime &&
-        job.totalHours,
+        job.totalHours &&
+        Number(job.totalHours) > 0, // ✅ ensures totalHours is > 0
     );
 
     if (!allFieldsFilled) {
@@ -277,6 +267,7 @@ const SearchScreen = ({route}) => {
         message: 'Please enter location',
       });
     }
+
     if (!selectedLocation?.latLng?.lat || !selectedLocation?.latLng?.lng) {
       return constants.current.isVisible({
         status: 'error',
@@ -287,29 +278,22 @@ const SearchScreen = ({route}) => {
 
     try {
       let newArra;
-      totalAmount = 0;
-      newArra = selectedJobs?.map(item => {
-        if (
-          !item.endDate ||
-          !item.startDate ||
-          !item.startTime ||
-          !item.endTime ||
-          !item.totalHours
-        ) {
-          return null;
-        }
+      let totalAmount = 0;
+
+      newArra = selectedJobs.map(item => {
         const momentDate1 = moment(item.endDate);
         const momentDate2 = moment(item.startDate);
         let differenceInDays = momentDate1.diff(momentDate2, 'days') + 1;
+
         const amount =
-          item.hourlyRate *
-          item.totalHours *
-          item.requiredPeoples *
+          Number(item.hourlyRate) *
+          Number(item.totalHours) *
+          Number(item.requiredPeoples) *
           differenceInDays;
+
         totalAmount += amount;
-        return {
-          ...item,
-        };
+
+        return {...item};
       });
 
       let params = {
@@ -319,7 +303,7 @@ const SearchScreen = ({route}) => {
         longitude: selectedLocation?.latLng.lng,
         jobStatus: 'Pending',
         createdBy: user?.userDetails?._id,
-        jobType: newArra?.length > 1 ? 'Group' : 'Single',
+        jobType: newArra.length > 1 ? 'Group' : 'Single',
         totalCost: totalAmount,
         qst: settings.qst,
         gst: settings.gst,
@@ -327,60 +311,60 @@ const SearchScreen = ({route}) => {
       };
 
       setLoading(true);
+      const groupJobResponse =
+        item?.type === 'edit'
+          ? await updatedJob(item?._id, params)
+          : await createGorupJob(params);
 
-      const groupJobResponse = await createGorupJob(params);
-
-      console.log(groupJobResponse, 'groupJobResponsegroupJobResponse');
-
-      // Check if first API call succeeded
-      if (groupJobResponse.status !== 200 && groupJobResponse.status !== 201) {
+      if (![200, 201].includes(groupJobResponse.status)) {
         setLoading(false);
-        constants.current.isVisible({
+        return constants.current.isVisible({
           status: 'error',
           message:
             groupJobResponse?.data?.message || 'Failed to create group job',
         });
-        return;
       }
 
-      let data = groupJobResponse?.data?.data;
-      let roles = data?.job?.map(item => {
-        return {
-          role: item?.name,
-          requiredCount: Number(item?.requiredPeoples),
-          totalHoursPerDay: Number(item?.totalHours),
-          startDate: item?.startDate,
-          endDate: item?.endDate,
-          startTime: item?.startTime,
-          endTime: item?.endTime,
-        };
-      });
+      // Prepare roles payload
+      let roles = groupJobResponse?.data?.data?.job.map(jobItem => ({
+        role: jobItem?.name,
+        requiredCount: Number(jobItem?.requiredPeoples),
+        totalHoursPerDay: Number(jobItem?.totalHours),
+        startDate: jobItem?.startDate,
+        endDate: jobItem?.endDate,
+        startTime: jobItem?.startTime,
+        endTime: jobItem?.endTime,
+      }));
 
       let payload = {
-        jobId: data?._id,
+        jobId: item?._id,
         roles,
       };
 
-      const adminJobResponse = await createJobForAdmin(payload);
+      const adminJobResponse =
+        item?.type === 'edit'
+          ? await updateJobForAdmin(payload)
+          : await createJobForAdmin(payload);
 
-      // Check if second API call succeeded
-      if (adminJobResponse.status === 200 || adminJobResponse.status === 201) {
-        setLoading(false);
+      setLoading(false);
+
+      if ([200, 201].includes(adminJobResponse.status)) {
         constants.current.isVisible({
           status: 'ok',
-          message:
-            adminJobResponse?.data?.message ||
-            groupJobResponse?.data?.message ||
-            'Job created successfully!',
+          message: groupJobResponse?.data?.message,
           handlePressOk: () => {
             constants.current.backdropPress();
             fetchInitialData();
             setSelectedLocation(null);
-            navigation.navigate('OnGoingHistoryStack');
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{name: 'OnGoingHistoryStack'}],
+              }),
+            );
           },
         });
       } else {
-        setLoading(false);
         constants.current.isVisible({
           status: 'error',
           message:
@@ -506,15 +490,32 @@ const SearchScreen = ({route}) => {
             <View style={styles.counterContainer}>
               <TouchableOpacity
                 style={styles.button}
-                onPress={() =>
-                  handleChangeJobField(
-                    index,
-                    'requiredPeoples',
-                    Math.max(item.requiredPeoples - 1, 1),
-                  )
-                }>
+                onPress={() => {
+                  if (item.requiredPeoples === 1) {
+                    // Show alert before removing job
+                    constants.current.isVisible({
+                      status: 'confirm',
+                      message:
+                        'Are you sure you want to remove this job from your order list?',
+                      handlePressOk: () => {
+                        // Reset job fields
+                        handleChangeJobField(index, 'resetJob', true);
+                      },
+                      handlePressCancel: () => {
+                        // Do nothing, user cancelled
+                      },
+                    });
+                  } else {
+                    handleChangeJobField(
+                      index,
+                      'requiredPeoples',
+                      Math.max(item.requiredPeoples - 1, 1),
+                    );
+                  }
+                }}>
                 <Entypo name="minus" color={appColors.black} size={15} />
               </TouchableOpacity>
+
               <Text style={styles.counterText}>{item.requiredPeoples}</Text>
               <TouchableOpacity
                 style={styles.button}
@@ -636,7 +637,9 @@ const SearchScreen = ({route}) => {
         {!isKeyboardVisible && (
           <View style={{margin: width(5)}}>
             <Button
-              btnTitle="Create New Job"
+              btnTitle={
+                item?.type === 'edit' ? 'Update Your Job' : 'Create New Job'
+              }
               btnTextStyle={styles.btnTextStyle}
               buttonContainer={styles.updateBtn}
               handlePressBtn={handleAdd}
