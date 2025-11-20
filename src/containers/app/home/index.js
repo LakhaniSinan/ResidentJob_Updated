@@ -145,43 +145,20 @@ const Home = () => {
         />
 
         <FlatList
+          ListHeaderComponent={
+            <Text
+              style={{
+                fontFamily: fontFamily.poppinsBold,
+                color: appColors.darkBlue,
+                padding: width(3),
+              }}>
+              Find your favorite Services
+            </Text>
+          }
+          data={homeData}
+          renderItem={renderCategory}
           refreshing={refreshing}
           onRefresh={() => handleFetchHomeData(true)}
-          ListHeaderComponent={
-            <View style={{padding: width(3)}}>
-              <Text
-                style={{
-                  fontFamily: fontFamily.poppinsBold,
-                  color: appColors.darkBlue,
-                }}>
-                Find your favorite Services
-              </Text>
-
-              <View
-                style={{
-                  height: width(40),
-                  backgroundColor: 'red',
-                  borderRadius: width(3),
-                  marginTop: width(3),
-                  overflow: 'hidden',
-                }}>
-                <Image
-                  source={appImages.bannerImage}
-                  style={{height: '100%', width: '100%'}}
-                />
-              </View>
-
-              <Text
-                style={{
-                  fontFamily: fontFamily.poppinsBold,
-                  color: appColors.darkBlue,
-                  marginVertical: width(3),
-                }}>
-                Category By Jobs
-              </Text>
-              <FlatList data={homeData} renderItem={renderCategory} />
-            </View>
-          }
         />
         <CommonAlert ref={modalRef} />
       </SafeAreaView>
