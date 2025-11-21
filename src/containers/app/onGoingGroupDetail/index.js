@@ -32,12 +32,17 @@ export const calculateJobCostDetails = item => {
 
   const jobDetails =
     item?.job?.map(job => {
-      const days = moment(job.endDate).diff(moment(job.startDate), 'days') + 1;
-      const subTotal =
-        days *
-        parseFloat(job.totalHours || 0) *
-        parseFloat(job.requiredPeoples || 0) *
-        parseFloat(job.hourlyRate || 0);
+      const start = moment(job.startDate);
+      const end = moment(job.endDate);
+
+      const diffInHours = end.diff(start, 'hours', true);
+      const days = Math.ceil(diffInHours / 24) || 1;
+
+      const totalHours = parseFloat(job.totalHours) || 0;
+      const requiredPeoples = parseFloat(job.requiredPeoples) || 0;
+      const hourlyRate = parseFloat(job.hourlyRate) || 0;
+
+      const subTotal = totalHours * requiredPeoples * hourlyRate * days;
       jobSubTotal += subTotal;
 
       return {
@@ -47,63 +52,52 @@ export const calculateJobCostDetails = item => {
       };
     }) || [];
 
-  const extraCostTotal = item?.extraCost?.reduce((acc, cost) => {
-    return acc + (parseFloat(cost?.number) || 0);
-  }, 0);
+  // extra cost
+  const extraCostTotal = item?.extraCost?.reduce(
+    (acc, cost) => acc + (parseFloat(cost?.number) || 0),
+    0,
+  );
 
-  // Promo handling: support different promo shapes from backend
-  // Priority: item.discountValue/discountType, item.appliedPromo, item.promoUsed, item.promoAmount, item.promo
-  const rawPromoValue =
-    item?.discountValue ??
-    item?.appliedPromo?.discountAmount ??
-    item?.appliedPromo?.discountValue ??
-    item?.promoAmount ??
-    item?.promo?.amount ??
-    item?.promoUsed?.discountValue ??
-    0;
-  const discountType =
-    item?.discountType ||
-    item?.appliedPromo?.discountType ||
-    item?.promo?.discountType ||
-    item?.promoUsed?.discountType ||
-    'flat';
+  // NEW CHANGE — combine job subtotal + extra cost
+  const subTotalBeforePromo = jobSubTotal + extraCostTotal;
 
-  // initial taxable amount before promo
-  const beforePromoTaxable = jobSubTotal + extraCostTotal;
-
+  // promo
   let promoAmount = 0;
-  if (rawPromoValue) {
-    const parsedValue = parseFloat(rawPromoValue) || 0;
+  const promo = item?.appliedPromo || null;
+
+  if (promo) {
+    const discountType = (promo.discountType || '').toLowerCase();
+    const discountValue = parseFloat(promo.discountValue) || 0;
+
     if (discountType === 'percentage' || discountType === 'percent') {
-      promoAmount = (beforePromoTaxable * parsedValue) / 100;
-    } else {
-      // treat as flat amount
-      promoAmount = parsedValue;
+      promoAmount = (subTotalBeforePromo * discountValue) / 100;
+    } else if (discountType === 'flat') {
+      promoAmount = discountValue;
+    } else if (promo.discountAmount) {
+      promoAmount = parseFloat(promo.discountAmount) || 0;
     }
+
+    if (promoAmount > subTotalBeforePromo) promoAmount = subTotalBeforePromo;
   }
 
-  // ensure promo does not exceed subtotal
-  if (promoAmount > beforePromoTaxable) promoAmount = beforePromoTaxable;
+  // NEW CHANGE — promo extraCost aur jobCost ke baad minus hoga
+  const taxableAmount = Math.max(0, subTotalBeforePromo - promoAmount);
 
-  // taxable amount after applying promo
-  const taxableAmount = Math.max(0, beforePromoTaxable - promoAmount);
+  const gstAmount = (taxableAmount * (parseFloat(item?.gst) || 0)) / 100;
 
-  const qstPercentage = parseFloat(item?.qst || 0);
-  const gstPercentage = parseFloat(item?.gst || 0);
+  const qstAmount = (taxableAmount * (parseFloat(item?.qst) || 0)) / 100;
 
-  const qstAmount = (taxableAmount * qstPercentage) / 100;
-  const gstAmount = (taxableAmount * gstPercentage) / 100;
-
-  const grandTotal = taxableAmount + qstAmount + gstAmount;
+  const grandTotal = taxableAmount + gstAmount + qstAmount;
 
   return {
     jobDetails,
     jobSubTotal,
     extraCostTotal,
-    taxableAmount,
+    subTotalBeforePromo,
     promoAmount,
-    qstAmount,
+    taxableAmount,
     gstAmount,
+    qstAmount,
     grandTotal,
   };
 };
@@ -121,6 +115,12 @@ const OnGoingGroupDetail = ({route}) => {
   const [loading, setLoading] = useState(null);
 
   const costDetails = calculateJobCostDetails(item);
+
+  console.log(
+    costDetails,
+    'costDetailscostDetailscostDetailscostDetailscostDetails',
+  );
+
   const promoAmount = parseFloat(costDetails?.promoAmount || 0);
 
   const requestWritePermission = async () => {
@@ -440,77 +440,6 @@ const OnGoingGroupDetail = ({route}) => {
     });
   };
 
-  // const handleCancelSingleJob = async jobIdToCancel => {
-  //   modalRef.current.isVisible({
-  //     status: 'confirm',
-  //     message: 'Are you sure you want to cancel this task?',
-  //     handlePressOk: async () => {
-  //       modalRef.current.backdropPress();
-  //       try {
-  //         setIsLoading(true);
-
-  //         const updatedJobs = item?.job?.map(job => {
-  //           if (job._id === jobIdToCancel) {
-  //             return {...job, status: 'userCancelled'};
-  //           }
-  //           return job;
-  //         });
-
-  //         const allCancelled = updatedJobs.every(
-  //           j => j.status === 'userCancelled',
-  //         );
-
-  //         const finalJobStatus = allCancelled ? 'Cancelled' : item.jobStatus;
-  //         let params = {
-  //           jobStatus: finalJobStatus,
-  //           job: updatedJobs,
-  //         };
-
-  //         const response = await cancelJob(item?.jobId, params);
-
-  //         setIsLoading(false);
-
-  //         if (response.status == 200 || response.status == 201) {
-  //           modalRef.current.isVisible({
-  //             status: 'ok',
-  //             message: response.data.message,
-  //             handlePressOk: () => {
-  //               modalRef.current.backdropPress();
-  //               navigation.goBack();
-  //             },
-  //           });
-  //         } else {
-  //           modalRef.current.isVisible({
-  //             status: 'error',
-  //             message: response.data.message,
-  //           });
-  //         }
-
-  //         console.log(response, 'UPDATED JOB RESPONSE');
-  //       } catch (error) {
-  //         setIsLoading(false);
-  //         console.log(error, 'ERROR UPDATING JOB STATUS');
-  //       }
-  //     },
-  //   });
-  // };
-  // const getStatusStyle = status => {
-  //   switch (status) {
-  //     case 'Pending':
-  //       return {bg: '#FFA500', text: '#FFFFFF'}; // Orange
-  //     case 'In-Progress':
-  //       return {bg: '#1E90FF', text: '#FFFFFF'}; // Blue
-  //     case 'Completed':
-  //       return {bg: '#28A745', text: '#FFFFFF'}; // Green
-  //     case 'Cancelled':
-  //       return {bg: '#DC3545', text: '#FFFFFF'}; // Red
-  //     case 'userCancelled':
-  //       return {bg: '#6C757D', text: '#FFFFFF'}; // Gray
-  //     default:
-  //       return {bg: '#6C757D', text: '#FFFFFF'};
-  //   }
-  // };
-
   return (
     <SafeAreaView>
       <ScrollView>
@@ -584,6 +513,8 @@ const OnGoingGroupDetail = ({route}) => {
             </Text>
           </View>
           {costDetails?.jobDetails?.map(data => {
+            console.log(data, 'datadatadatadatadataalksndalkndkasnd');
+
             let sum = 0;
             const momentDate1 = moment(data.endDate);
             const momentDate2 = moment(data.startDate);
@@ -591,8 +522,8 @@ const OnGoingGroupDetail = ({route}) => {
 
             // Subtotal calculation
             sum =
-              data.hourlyRate *
-              data.totalHours *
+              Number(data.hourlyRate) *
+              Number(data.totalHours) *
               differenceInDays *
               data.requiredPeoples;
 
@@ -602,31 +533,6 @@ const OnGoingGroupDetail = ({route}) => {
                   borderBottomWidth: item?.job.length > 1 ? 0.5 : 0,
                   marginTop: 10,
                 }}>
-                {/* <View style={{marginTop: 5, alignItems: 'flex-end'}}>
-                  {(() => {
-                    const {bg, text} = getStatusStyle(
-                      data?.status || item?.jobStatus,
-                    );
-                    return (
-                      <View
-                        style={{
-                          backgroundColor: bg,
-                          paddingHorizontal: 12,
-                          paddingVertical: 5,
-                          borderRadius: 20,
-                        }}>
-                        <Text
-                          style={{
-                            color: text,
-                            fontSize: 12,
-                            fontWeight: 'bold',
-                          }}>
-                          {(data?.status || item?.jobStatus)?.toUpperCase()}
-                        </Text>
-                      </View>
-                    );
-                  })()}
-                </View> */}
                 {renderData('Job Title', data.name)}
                 {renderData('People Required', data.requiredPeoples)}
                 {renderData(
@@ -641,59 +547,6 @@ const OnGoingGroupDetail = ({route}) => {
                 {renderData('Total Hours', data.totalHours)}
                 {renderData('Total Days', differenceInDays)}
                 {renderData('Total', `$${sum.toFixed(2)}`, 'bold')}
-                {/* {item?.jobStatus == 'Pending' && (
-                  <>
-                    <View
-                      style={{
-                        // flexDirection: 'row',
-                        // justifyContent: 'space-between',
-                        // alignItems: 'center',
-                        marginVertical: width(4),
-                      }}>
-                     <View style={{width: width(45)}}>
-                        <Button
-                          btnFontSize={12}
-                          handlePressBtn={() =>
-                            handleCancelSingleJob(data?._id)
-                          }
-                          btnTitle={'Cancel Job'}
-                          btnTextStyle={{
-                            color: appColors.white,
-                          }}
-                          buttonContainer={{
-                            backgroundColor: appColors.primaryColor,
-                            borderColor: appColors.primaryColor,
-                            borderWidth: 1,
-                            borderRadius: 12,
-                            paddingVertical: width(3),
-                          }}
-                        />
-                      </View>
-                      <View style={{}}>
-                        <Button
-                          btnFontSize={12}
-                          handlePressBtn={() =>
-                            navigation.navigate('SearchScreen', {
-                              ...item,
-                              type: 'edit',
-                            })
-                          }
-                          btnTitle={'Edit Job'}
-                          btnTextStyle={{
-                            color: appColors.white,
-                          }}
-                          buttonContainer={{
-                            backgroundColor: appColors.primaryColor,
-                            borderColor: appColors.primaryColor,
-                            borderWidth: 1,
-                            borderRadius: 12,
-                            paddingVertical: width(3),
-                          }}
-                        />
-                      </View>
-                    </View>
-                  </>
-                )} */}
 
                 <Text
                   style={{
@@ -760,12 +613,15 @@ const OnGoingGroupDetail = ({route}) => {
           )}
           {renderData(
             'Sub Total',
-            `$${(costDetails?.jobSubTotal || 0).toFixed(2)}`,
+            `$${(costDetails?.subTotalBeforePromo || 0).toFixed(2)}`,
             'bold',
           )}
+
           {promoAmount > 0 &&
             renderData(
-              'Promo Discount',
+              `Promo Discount ${
+                item?.appliedPromo?.discountType == 'percentage' ? '%' : 'Fla'
+              }`,
               `-$${promoAmount.toFixed(2)}${
                 item?.appliedPromo?.code
                   ? ' (' + item.appliedPromo.code + ')'
@@ -790,60 +646,59 @@ const OnGoingGroupDetail = ({route}) => {
           )}
         </View>
         {item?.jobStatus == 'Pending' && (
-          <>
+          <View
+            style={{
+              marginHorizontal: width(4),
+            }}>
             <Text
               style={{
                 fontFamily: fontFamily.poppinsBold,
                 color: appColors.gray,
                 textAlign: 'center',
-                marginVertical: width(3),
+                marginVertical: width(5),
                 width: '100%',
               }}>
               Please wait. You’ll be able to make a payment once the worker has
               been assigned to you.
             </Text>
-            <View
-              style={{
-                marginHorizontal: width(4),
-              }}>
-              <Button
-                btnFontSize={12}
-                handlePressBtn={handleCancelJob}
-                btnTitle={'Cancel Job'}
-                btnTextStyle={{
-                  color: appColors.white,
-                }}
-                buttonContainer={{
-                  backgroundColor: appColors.primaryColor,
-                  borderColor: appColors.primaryColor,
-                  borderWidth: 1,
-                  borderRadius: 12,
-                  paddingVertical: width(3),
-                }}
-              />
-              <View style={{height: width(2)}} />
-              <Button
-                btnFontSize={12}
-                handlePressBtn={() =>
-                  navigation.navigate('SearchScreen', {
-                    ...item,
-                    type: 'edit',
-                  })
-                }
-                btnTitle={'Edit Job'}
-                btnTextStyle={{
-                  color: appColors.white,
-                }}
-                buttonContainer={{
-                  backgroundColor: appColors.primaryColor,
-                  borderColor: appColors.primaryColor,
-                  borderWidth: 1,
-                  borderRadius: 12,
-                  paddingVertical: width(3),
-                }}
-              />
-            </View>
-          </>
+
+            <Button
+              btnFontSize={12}
+              handlePressBtn={handleCancelJob}
+              btnTitle={'Cancel Job'}
+              btnTextStyle={{
+                color: appColors.white,
+              }}
+              buttonContainer={{
+                backgroundColor: appColors.primaryColor,
+                borderColor: appColors.primaryColor,
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingVertical: width(3),
+              }}
+            />
+            <View style={{height: width(2)}} />
+            <Button
+              btnFontSize={12}
+              handlePressBtn={() =>
+                navigation.navigate('SearchScreen', {
+                  ...item,
+                  type: 'edit',
+                })
+              }
+              btnTitle={'Edit Job'}
+              btnTextStyle={{
+                color: appColors.white,
+              }}
+              buttonContainer={{
+                backgroundColor: appColors.primaryColor,
+                borderColor: appColors.primaryColor,
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingVertical: width(3),
+              }}
+            />
+          </View>
         )}
         <View
           style={{

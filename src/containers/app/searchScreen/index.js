@@ -82,6 +82,7 @@ const SearchScreen = ({route}) => {
   useFocusEffect(
     useCallback(() => {
       fetchInitialData();
+      setPromo(item?.appliedPromo?.code);
     }, [JSON.stringify(item?.job)]),
   );
 
@@ -109,6 +110,7 @@ const SearchScreen = ({route}) => {
     setLoading(true);
     try {
       const response = await GetJobTitle();
+      console.log(response, 'responseresponseresponseresponse');
 
       if (response.status === 200 || response.status === 201) {
         const oldJobs = item?.job ?? [];
@@ -166,28 +168,13 @@ const SearchScreen = ({route}) => {
       ),
     );
   };
-
   const handleChangeJobField = (index, field, value) => {
     setJobTitles(prev =>
       prev.map((job, i) => {
         if (i === index) {
           let updatedJob = {...job};
 
-          // Reset job
-          if (field === 'resetJob' && value) {
-            return {
-              ...updatedJob,
-              isSelected: false,
-              requiredPeoples: 1,
-              startDate: '',
-              endDate: '',
-              startTime: '',
-              endTime: '',
-              totalHours: '',
-            };
-          }
-
-          // Check if dates are selected before allowing time selection
+          // ✅ Check if dates are selected before allowing time selection
           if (
             (field === 'startTime' || field === 'endTime') &&
             (!updatedJob.startDate || !updatedJob.endDate)
@@ -200,31 +187,110 @@ const SearchScreen = ({route}) => {
             return job;
           }
 
-          // Format startTime/endTime
+          // ✅ Convert time to "hh:00 A" format
           if (field === 'startTime' || field === 'endTime') {
             const formattedTime = moment(value).format('hh:00 A');
             updatedJob[field] = formattedTime;
 
-            // Reset endTime if startTime changes
-            if (field === 'startTime') {
+            // ✅ Reset end time when start time is changed and end time was previously selected
+            if (field === 'startTime' && updatedJob.endTime) {
               updatedJob.endTime = '';
               updatedJob.totalHours = '';
             }
-
-            // Calculate totalHours if both start and end time exist
-            if (updatedJob.startTime && updatedJob.endTime) {
-              let startMoment = moment(updatedJob.startTime, 'hh:mm A');
-              let endMoment = moment(updatedJob.endTime, 'hh:mm A');
-
-              if (endMoment.isBefore(startMoment)) {
-                endMoment.add(1, 'day'); // overnight handling
-              }
-
-              const totalHours = endMoment.diff(startMoment, 'hours', true);
-              updatedJob.totalHours = totalHours.toFixed(); // ✅ string or number
-            }
           } else {
             updatedJob[field] = value;
+          }
+
+          // ✅ Check time difference between startTime and endTime
+          if (field === 'endTime' && updatedJob.startTime) {
+            let startMoment = moment(updatedJob.startTime, 'hh:mm A');
+            let endMoment = moment(updatedJob.endTime, 'hh:mm A');
+
+            // Handle overnight (e.g. 9PM to 3AM next day)
+            if (endMoment.isBefore(startMoment)) {
+              // Automatically update end date to next day
+              const currentEndDate = moment(updatedJob.endDate);
+              const newEndDate = moment(updatedJob.startDate).add(1, 'day');
+
+              // Update the end date
+              updatedJob.endDate = newEndDate.format('YYYY-MM-DD');
+
+              // Show info message about automatic date update
+              setTimeout(() => {
+                constants.current.isVisible({
+                  status: 'ok',
+                  message: `End date automatically updated to ${newEndDate.format(
+                    'MM/DD/YYYY',
+                  )} due to overnight timing.`,
+                });
+              }, 100);
+
+              endMoment.add(1, 'day');
+            }
+
+            const totalHours = endMoment.diff(startMoment, 'hours', true);
+
+            if (totalHours < 6) {
+              constants.current.isVisible({
+                status: 'error',
+                message:
+                  'Minimum difference between startTime and endTime should be 6 hours',
+              });
+              return job;
+            } else {
+              updatedJob.totalHours = totalHours.toFixed();
+            }
+          }
+
+          // ✅ Check if endDate is before startDate
+          if (field === 'endDate' && updatedJob.startDate) {
+            const startDate = moment(updatedJob.startDate, 'YYYY-MM-DD');
+            const endDate = moment(value, 'YYYY-MM-DD');
+
+            if (endDate.isBefore(startDate, 'day')) {
+              constants.current.isVisible({
+                status: 'error',
+                message: 'End Date cannot be before Start Date.',
+              });
+              return job;
+            }
+
+            // ✅ Minimum 6 hour difference check with date+time
+            const startDateTime = moment(
+              `${updatedJob.startDate} ${updatedJob.startTime || '00:00 AM'}`,
+              'YYYY-MM-DD hh:mm A',
+            );
+            let endDateTime = moment(
+              `${value} ${updatedJob.endTime || '11:59 PM'}`,
+              'YYYY-MM-DD hh:mm A',
+            );
+
+            // Handle overnight shifts (if same day and end time is before start time)
+            if (
+              startDate.isSame(endDate, 'day') &&
+              updatedJob.endTime &&
+              updatedJob.startTime
+            ) {
+              const startTime = moment(updatedJob.startTime, 'hh:mm A');
+              const endTime = moment(updatedJob.endTime, 'hh:mm A');
+
+              if (endTime.isBefore(startTime)) {
+                endDateTime.add(1, 'day');
+              }
+            }
+
+            const dateDiffInHours = endDateTime.diff(
+              startDateTime,
+              'hours',
+              true,
+            );
+
+            if (dateDiffInHours < 6) {
+              alert(
+                'You cannot select this end Date. Minimum 6 hours difference required.',
+              );
+              return job;
+            }
           }
 
           return updatedJob;
@@ -233,6 +299,73 @@ const SearchScreen = ({route}) => {
       }),
     );
   };
+
+  // const handleChangeJobField = (index, field, value) => {
+  //   setJobTitles(prev =>
+  //     prev.map((job, i) => {
+  //       if (i === index) {
+  //         let updatedJob = {...job};
+
+  //         // Reset job
+  //         if (field === 'resetJob' && value) {
+  //           return {
+  //             ...updatedJob,
+  //             isSelected: false,
+  //             requiredPeoples: 1,
+  //             startDate: '',
+  //             endDate: '',
+  //             startTime: '',
+  //             endTime: '',
+  //             totalHours: '',
+  //           };
+  //         }
+
+  //         // Check if dates are selected before allowing time selection
+  //         if (
+  //           (field === 'startTime' || field === 'endTime') &&
+  //           (!updatedJob.startDate || !updatedJob.endDate)
+  //         ) {
+  //           constants.current.isVisible({
+  //             status: 'error',
+  //             message:
+  //               'Please select start and end dates before selecting times.',
+  //           });
+  //           return job;
+  //         }
+
+  //         // Format startTime/endTime
+  //         if (field === 'startTime' || field === 'endTime') {
+  //           const formattedTime = moment(value).format('hh:00 A');
+  //           updatedJob[field] = formattedTime;
+
+  //           // Reset endTime if startTime changes
+  //           if (field === 'startTime') {
+  //             updatedJob.endTime = '';
+  //             updatedJob.totalHours = '';
+  //           }
+
+  //           // Calculate totalHours if both start and end time exist
+  //           if (updatedJob.startTime && updatedJob.endTime) {
+  //             let startMoment = moment(updatedJob.startTime, 'hh:mm A');
+  //             let endMoment = moment(updatedJob.endTime, 'hh:mm A');
+
+  //             if (endMoment.isBefore(startMoment)) {
+  //               endMoment.add(1, 'day'); // overnight handling
+  //             }
+
+  //             const totalHours = endMoment.diff(startMoment, 'hours', true);
+  //             updatedJob.totalHours = totalHours.toFixed(); // ✅ string or number
+  //           }
+  //         } else {
+  //           updatedJob[field] = value;
+  //         }
+
+  //         return updatedJob;
+  //       }
+  //       return job;
+  //     }),
+  //   );
+  // };
 
   const handleAdd = async () => {
     const selectedJobs = jobTitles?.filter(job => job.isSelected);
@@ -325,7 +458,6 @@ const SearchScreen = ({route}) => {
         });
       }
 
-      // Prepare roles payload
       let roles = groupJobResponse?.data?.data?.job.map(jobItem => ({
         role: jobItem?.name,
         requiredCount: Number(jobItem?.requiredPeoples),
@@ -337,7 +469,7 @@ const SearchScreen = ({route}) => {
       }));
 
       let payload = {
-        jobId: item?._id,
+        jobId: groupJobResponse?.data?.data?._id,
         roles,
       };
 
