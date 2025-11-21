@@ -1,6 +1,6 @@
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
-import React, {useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   PermissionsAndroid,
@@ -12,20 +12,20 @@ import {
   Text,
   View,
 } from 'react-native';
-import {width} from 'react-native-dimension';
+import { width } from 'react-native-dimension';
 import RNFS from 'react-native-fs';
-import {generatePDF} from 'react-native-html-to-pdf';
-import {useSelector} from 'react-redux';
-import {appIcons, fontFamily} from '../../../assets';
+import { generatePDF } from 'react-native-html-to-pdf';
+import { useSelector } from 'react-redux';
+import { appIcons, fontFamily } from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import CustomCheckBox from '../../../components/customcheckBox';
 import Loader from '../../../components/loader';
 import RenderReviewCard from '../../../components/reviewCard/reviewCard';
-import {appColors} from '../../../constants';
-import {cancelJob} from '../../../services/createJob';
-import {updateJobByAdmin} from '../../../services/wallet';
+import { appColors } from '../../../constants';
+import { cancelJob } from '../../../services/createJob';
+import { updateJobByAdmin } from '../../../services/wallet';
 
 export const calculateJobCostDetails = item => {
   let jobSubTotal = 0;
@@ -37,12 +37,18 @@ export const calculateJobCostDetails = item => {
 
       const diffInHours = end.diff(start, 'hours', true);
       const days = Math.ceil(diffInHours / 24) || 1;
+      const momentDate1 = moment(end);
+      const momentDate2 = moment(start);
+      let differenceInDays = momentDate1.diff(momentDate2, 'days') + 1;
 
       const totalHours = parseFloat(job.totalHours) || 0;
       const requiredPeoples = parseFloat(job.requiredPeoples) || 0;
       const hourlyRate = parseFloat(job.hourlyRate) || 0;
+      console.log(totalHours, requiredPeoples, hourlyRate, differenceInDays, "VLUEEE");
 
-      const subTotal = totalHours * requiredPeoples * hourlyRate * days;
+      const subTotal = Number(totalHours) * Number(requiredPeoples) * Number(hourlyRate) * Number(differenceInDays);
+      console.log(subTotal, "subTotalsubTotalsubTotal");
+
       jobSubTotal += subTotal;
 
       return {
@@ -59,7 +65,7 @@ export const calculateJobCostDetails = item => {
   );
 
   // NEW CHANGE — combine job subtotal + extra cost
-  const subTotalBeforePromo = jobSubTotal + extraCostTotal;
+  const subTotalBeforePromo = jobSubTotal;
 
   // promo
   let promoAmount = 0;
@@ -87,12 +93,11 @@ export const calculateJobCostDetails = item => {
 
   const qstAmount = (taxableAmount * (parseFloat(item?.qst) || 0)) / 100;
 
-  const grandTotal = taxableAmount + gstAmount + qstAmount;
+  const grandTotal = taxableAmount + gstAmount + qstAmount + extraCostTotal;
 
   return {
     jobDetails,
     jobSubTotal,
-    extraCostTotal,
     subTotalBeforePromo,
     promoAmount,
     taxableAmount,
@@ -102,13 +107,13 @@ export const calculateJobCostDetails = item => {
   };
 };
 
-const OnGoingGroupDetail = ({route}) => {
+const OnGoingGroupDetail = ({ route }) => {
   let item = route.params;
   console.log(item, 'itemitemitemitemitemitem123123123213123');
 
   const [isAgree, setIsAgree] = useState(false);
   const navigation = useNavigation();
-  const {user} = useSelector(state => state.LoginSlice);
+  const { user } = useSelector(state => state.LoginSlice);
   const modalRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -161,20 +166,19 @@ const OnGoingGroupDetail = ({route}) => {
       const additionalChargesHTML = `
       <div class="section">
         <p class="title" style="text-align: center; margin-top: 10px;">Additional Charges</p>
-        ${
-          item?.extraCost?.length > 0
-            ? item.extraCost
-                .map(cost => {
-                  const amount = parseFloat(cost?.number || 0).toFixed(2);
-                  return `
+        ${item?.extraCost?.length > 0
+          ? item.extraCost
+            .map(cost => {
+              const amount = parseFloat(cost?.number || 0).toFixed(2);
+              return `
                     <div class="detail" style="font-weight: bold;">
                       <span>${cost?.text}</span>
                       <span>$${amount}</span>
                     </div>
                   `;
-                })
-                .join('')
-            : `
+            })
+            .join('')
+          : `
               <p style="text-align: center; margin-top: 10px; font-size: 14px; color: gray;">
                 No Additional Charges Included.
               </p>
@@ -184,16 +188,14 @@ const OnGoingGroupDetail = ({route}) => {
           <span>Sub Total</span>
           <span>$${(jobSubTotal || 0).toFixed(2)}</span>
         </div>
-        ${
-          promoAmount > 0
-            ? `<div class="detail" style="font-weight: bold;"><span>Promo</span><span>-$${promoAmount.toFixed(
-                2,
-              )}${
-                item?.appliedPromo?.code
-                  ? ' (' + item.appliedPromo.code + ')'
-                  : ''
-              }</span></div>`
+        ${promoAmount > 0
+          ? `<div class="detail" style="font-weight: bold;"><span>Promo</span><span>-$${promoAmount.toFixed(
+            2,
+          )}${item?.appliedPromo?.code
+            ? ' (' + item.appliedPromo.code + ')'
             : ''
+          }</span></div>`
+          : ''
         }
         <div class="detail" style="font-weight: bold;">
           <span>Taxable Amount</span>
@@ -247,8 +249,8 @@ const OnGoingGroupDetail = ({route}) => {
             
             <div class="section">
               ${costDetails?.jobDetails
-                ?.map(
-                  job => `
+          ?.map(
+            job => `
                   <div class="job-container">
                     <div class="detail"><span>Job Title:</span> <span>${job.name}</span></div>
                     <div class="detail"><span>Number Of People Required:</span> <span>${job.requiredPeoples}</span></div>
@@ -258,8 +260,8 @@ const OnGoingGroupDetail = ({route}) => {
                     <div class="detail"><span>Sub Total:</span> <span>$${job.subTotal}</span></div>
                   </div>
                 `,
-                )
-                .join('')}
+          )
+          .join('')}
             </div>
 
             ${additionalChargesHTML}
@@ -267,9 +269,8 @@ const OnGoingGroupDetail = ({route}) => {
             <div class="section">
               <p class="title">Recipient Details</p>
               <div class="detail">
-                <span>Name:</span> <span>${item.createdBy.firstname} ${
-        item.createdBy.lastname
-      }</span>
+                <span>Name:</span> <span>${item.createdBy.firstname} ${item.createdBy.lastname
+        }</span>
               </div>
               <div class="detail">
                 <span>Email:</span> <span>${item.createdBy.email}</span>
@@ -386,7 +387,7 @@ const OnGoingGroupDetail = ({route}) => {
                 // navigation.navigate('RateUsScreen', item);
                 navigation.reset({
                   index: 0,
-                  routes: [{name: 'OnGoingHistoryStack'}],
+                  routes: [{ name: 'OnGoingHistoryStack' }],
                 });
               },
             });
@@ -449,7 +450,7 @@ const OnGoingGroupDetail = ({route}) => {
           height={width(20)}
           heading={'Jobs Details'}
           headingColor={appColors.white}
-          leftIconStyle={{height: 27, width: 27}}
+          leftIconStyle={{ height: 27, width: 27 }}
           leftIcon={appIcons.goBackIcon}
         />
         <View
@@ -459,7 +460,7 @@ const OnGoingGroupDetail = ({route}) => {
             borderRadius: 5,
             marginHorizontal: 10,
           }}>
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <Text
               style={{
                 color: 'black',
@@ -469,11 +470,11 @@ const OnGoingGroupDetail = ({route}) => {
               }}>
               Job Status:
             </Text>
-            <Text style={{marginLeft: 10, color: 'black'}}>
+            <Text style={{ marginLeft: 10, color: 'black' }}>
               {item.jobStatus}
             </Text>
           </View>
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <Text
               style={{
                 color: 'black',
@@ -483,9 +484,9 @@ const OnGoingGroupDetail = ({route}) => {
               }}>
               Job Id:
             </Text>
-            <Text style={{marginLeft: 10, color: 'black'}}>{item.jobId}</Text>
+            <Text style={{ marginLeft: 10, color: 'black' }}>{item.jobId}</Text>
           </View>
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <Text
               style={{
                 color: 'black',
@@ -495,7 +496,7 @@ const OnGoingGroupDetail = ({route}) => {
               }}>
               Job Address:
             </Text>
-            <Text style={{marginLeft: 10, color: 'black', width: '65%'}}>
+            <Text style={{ marginLeft: 10, color: 'black', width: '65%' }}>
               {item.address}
             </Text>
           </View>
@@ -619,15 +620,15 @@ const OnGoingGroupDetail = ({route}) => {
 
           {promoAmount > 0 &&
             renderData(
-              `Promo Discount ${
-                item?.appliedPromo?.discountType == 'percentage' ? '%' : 'Fla'
-              }`,
-              `-$${promoAmount.toFixed(2)}${
-                item?.appliedPromo?.code
-                  ? ' (' + item.appliedPromo.code + ')'
-                  : ''
-              }`,
+              `Promo Discount`,
+              `$${promoAmount.toFixed(2)}`,
               'bold',
+            )}
+          {promoAmount > 0 &&
+            renderData(
+              `Promo Code`,
+              item.appliedPromo.code,
+              "bold"
             )}
           {renderData(
             'QST',
@@ -677,7 +678,7 @@ const OnGoingGroupDetail = ({route}) => {
                 paddingVertical: width(3),
               }}
             />
-            <View style={{height: width(2)}} />
+            <View style={{ height: width(2) }} />
             <Button
               btnFontSize={12}
               handlePressBtn={() =>

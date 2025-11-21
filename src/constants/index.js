@@ -4,7 +4,7 @@ export const appColors = {
   black: '#000000',
   lightSky: '#B3E1F7',
   yellow: '#FFDD00',
-  darkYellow: '#FCB200',
+  darkYellow: '#FCAD38',
   lightBlack: '#272020',
   gray: '#0000006B',
   darkBlue: '#000080',

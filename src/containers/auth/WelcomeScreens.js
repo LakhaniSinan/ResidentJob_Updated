@@ -50,7 +50,7 @@ const WelcomeScreens = () => {
             marginBottom: width(40),
           }}>
           <Image
-            source={appImages.logo}
+            source={appImages.newImage}
             resizeMode="cover"
             style={{height: '100%', width: '100%'}}
           />
@@ -69,7 +69,7 @@ const WelcomeScreens = () => {
               alignItems: 'center',
               marginHorizontal: width(3),
               justifyContent: 'center',
-              backgroundColor: appColors.lightSky,
+              backgroundColor: appColors.darkYellow,
             }}>
             <Text
               style={{
@@ -88,7 +88,7 @@ const WelcomeScreens = () => {
               alignItems: 'center',
               margin: width(3),
               justifyContent: 'center',
-              backgroundColor: appColors.lightSky,
+              backgroundColor: appColors.darkYellow,
             }}>
             <Text
               style={{

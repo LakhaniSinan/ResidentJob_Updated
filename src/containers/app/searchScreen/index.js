@@ -735,11 +735,10 @@ const SearchScreen = ({route}) => {
                 setSelectedLocation={setSelectedLocation}
                 placeholder="Select your locations"
               />
-              <Text style={styles.labelBold}>Promo Code.</Text>
+              <Text style={styles.labelBold}>Promo Code</Text>
               <InputField
-                placeholder="enter promo code."
+                placeholder="Enter Promo Code"
                 placeholderTextColor={appColors.gray}
-                keyboardType="numeric"
                 value={promo}
                 onChangeText={setPromo}
               />
