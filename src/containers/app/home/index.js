@@ -37,7 +37,7 @@ const Home = () => {
       }
 
       const response = await fetchHomeData();
-      // console.log(response?.data, 'responseresponse');
+      console.log(response, 'responseresponse');
 
       if (response.status == 200 || response.status == 201) {
         let data = response?.data.occupations;

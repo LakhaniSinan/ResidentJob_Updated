@@ -1,61 +1,74 @@
-import moment from 'moment';
 import React, {useState} from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
-import {AirbnbRating} from 'react-native-ratings';
-import {appColors} from '../../constants';
 import {fontFamily} from '../../assets';
+import {appColors} from '../../constants';
+import moment from 'moment';
 
-const RenderReviewCard = ({item, height}) => {
+const RenderReviewCard = ({item}) => {
   const [showAllReview, setShowAllReview] = useState(false);
 
+  // Calculate total hours
+  const totalHours = item?.checkInOut?.reduce((sum, record) => {
+    if (record.checkInTime && record.checkOutTime) {
+      const checkIn = moment(record.checkInTime);
+      const checkOut = moment(record.checkOutTime);
+      const duration = moment.duration(checkOut.diff(checkIn));
+      return sum + duration.asHours();
+    }
+    return sum;
+  }, 0);
+
   return (
-    <View
-      style={
-        showAllReview || height
-          ? styles.showFullReviewCardContainer
-          : styles.reviewCardContainer
-      }>
-      <View style={styles.row}>
-        <View style={styles.profileImageContainer}>
-          <Image
-            source={{uri: item?.image}}
-            resizeMode="cover"
-            style={styles.profileImage}
-          />
-        </View>
+    <View style={styles.cardContainer}>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <Image source={{uri: item?.image}} style={styles.profileImage} />
         <View style={styles.userInfo}>
           <Text style={styles.name}>
-            {item?.jobSeekerId?.firstname}{' '}
-            {item?.lastname ? item?.lastname : ''}
+            {item?.jobSeekerId?.firstname} {item?.jobSeekerId?.lastname || ''}
+          </Text>
+          <Text style={styles.totalHoursText}>
+            {totalHours.toFixed(2)}h worked
           </Text>
         </View>
       </View>
-      <View style={styles.row}>
-        {/* <AirbnbRating
-          ratingContainerStyle={styles.ratingContainer}
-          count={5}
-          showRating={false}
-          isDisabled={true}
-          defaultRating={item.rating}
-          size={18}
-        /> */}
-        {/* <Text style={styles.reviewDate}>
-          {moment(item?.createdAt).format('MM/DD/YYYY hh:mm A')}
-        </Text> */}
+
+      {/* Table */}
+      <View style={styles.tableContainer}>
+        {/* Table Header */}
+        <View style={styles.tableHeader}>
+          <Text style={styles.headerText}>Date</Text>
+          <Text style={styles.headerText}>Check In</Text>
+          <Text style={styles.headerText}>Check Out</Text>
+          <Text style={styles.headerText}>Hours</Text>
+        </View>
+
+        {/* Table Rows */}
+        {item?.checkInOut?.map((row, index) => {
+          const checkIn = row?.checkInTime ? moment(row.checkInTime) : null;
+          const checkOut = row?.checkOutTime ? moment(row.checkOutTime) : null;
+          const hours =
+            checkIn && checkOut
+              ? moment.duration(checkOut.diff(checkIn)).asHours()
+              : 0;
+
+          return (
+            <View style={styles.tableRow} key={index}>
+              <Text style={styles.rowText}>
+                {moment(row?.date).format('DD/MM/YYYY')}
+              </Text>
+              <Text style={styles.rowText}>
+                {checkIn ? checkIn.format('hh:mm A') : 'N/A'}
+              </Text>
+              <Text style={styles.rowText}>
+                {checkOut ? checkOut.format('hh:mm A') : 'N/A'}
+              </Text>
+              <Text style={styles.rowText}>{hours.toFixed(2)}h</Text>
+            </View>
+          );
+        })}
       </View>
-      {/* <Text
-        numberOfLines={showAllReview ? undefined : 6}
-        style={styles.reviewText}>
-        {item?.reviewText}
-      </Text>
-      {item?.reviewText?.length > 300 && (
-        <TouchableOpacity onPress={() => setShowAllReview(!showAllReview)}>
-          <Text style={styles.readMoreText}>
-            {showAllReview ? 'Show Less' : 'Show More'}
-          </Text>
-        </TouchableOpacity>
-      )} */}
     </View>
   );
 };
@@ -63,90 +76,79 @@ const RenderReviewCard = ({item, height}) => {
 export default RenderReviewCard;
 
 const styles = StyleSheet.create({
-  row: {
+  cardContainer: {
+    width: width(90),
+    backgroundColor: appColors.white,
+    borderRadius: width(4),
+    padding: width(4),
+    marginVertical: width(3),
+    marginHorizontal: width(3),
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  profileImageContainer: {
-    height: width(12),
-    width: width(12),
-    overflow: 'hidden',
-    borderRadius: width(6),
-    borderWidth: 1,
-    borderColor: appColors.gray,
+    marginBottom: width(3),
   },
   profileImage: {
-    height: '100%',
-    width: '100%',
+    width: width(14),
+    height: width(14),
+    borderRadius: width(7),
+    borderWidth: 1,
+    borderColor: appColors.lightGray,
   },
   userInfo: {
     marginLeft: width(3),
+    justifyContent: 'center',
   },
   name: {
-    fontFamily: fontFamily.poppinsBold,
-    fontSize: 15,
+    fontFamily: fontFamily.poppinsSemiBold,
+    fontSize: 16,
     color: appColors.black,
   },
-  userAddress: {
-    fontFamily: fontFamily.poppinsBold,
+  totalHoursText: {
+    fontFamily: fontFamily.poppinsRegular,
     fontSize: 12,
-    color: appColors.lightText,
+    color: appColors.gray,
+    marginTop: 2,
   },
-  ratingContainer: {
-    height: width(10),
+  tableContainer: {
+    marginTop: width(2),
+    borderRadius: width(2),
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden',
   },
-  reviewDate: {
-    fontFamily: fontFamily.poppinsRegular,
-    fontSize: 14,
-    color: appColors.lightText,
-    marginLeft: width(3),
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: appColors.primary,
+    paddingVertical: width(2),
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    justifyContent: 'space-around',
   },
-  reviewText: {
-    fontFamily: fontFamily.poppinsRegular,
-    fontSize: 14,
-    color: appColors.lightBlack,
-    marginVertical: width(2),
-  },
-  readMoreText: {
-    fontFamily: fontFamily.poppinsBold,
-    textAlign: 'right',
-    textDecorationLine: 'underline',
-    fontSize: 14,
+  headerText: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fontFamily.poppinsSemiBold,
     color: appColors.black,
+    fontSize: 13,
   },
-  reviewCardContainer: {
-    width: width(90),
-    marginVertical: width(3),
-    borderRadius: width(3),
-    backgroundColor: appColors.white,
-    padding: width(3),
-    marginHorizontal: width(3),
-    height: width(70),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-
-    elevation: 5,
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: width(2),
+    justifyContent: 'space-around',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  showFullReviewCardContainer: {
-    width: width(90),
-    marginVertical: width(3),
-    borderRadius: width(3),
-    backgroundColor: appColors.white,
-    padding: width(3),
-    marginHorizontal: width(3),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-
-    elevation: 5,
+  rowText: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fontFamily.poppinsRegular,
+    fontSize: 13,
+    color: appColors.black,
   },
 });
