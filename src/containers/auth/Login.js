@@ -1,20 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { 
-  getApp 
+import {
+  getApp
 } from '@react-native-firebase/app';
-import { 
-  getMessaging, 
-  getToken, 
-  requestPermission, 
-  registerDeviceForRemoteMessages, 
-  AuthorizationStatus 
+import {
+  getMessaging,
+  getToken,
+  requestPermission,
+  registerDeviceForRemoteMessages,
+  AuthorizationStatus
 } from '@react-native-firebase/messaging';
 import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useRef, useState} from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -24,73 +24,96 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Switch
 } from 'react-native';
-import {width} from 'react-native-dimension';
+import { width } from 'react-native-dimension';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import {useDispatch} from 'react-redux';
-import {appIcons, fontFamily} from '../../assets';
+import { useDispatch } from 'react-redux';
+import { appIcons, fontFamily } from '../../assets';
 import AuthHeader from '../../components/authHeader';
 import Button from '../../components/button';
 import Loader from '../../components/loader';
 import InputField from '../../components/textInput';
-import {appColors} from '../../constants';
-import {setUserData} from '../../redux/slices/Login';
-import {loginUser} from '../../services/authentication';
+import { appColors } from '../../constants';
+import { setUserData } from '../../redux/slices/Login';
+import { loginUser } from '../../services/authentication';
 import {
   checkNotifications,
   requestNotifications,
 } from 'react-native-permissions';
-import {googleLogin} from '../../services/socialLogin';
+import { googleLogin } from '../../services/socialLogin';
 import AppHeader from '../../components/appHeader';
-import {appleAuth} from '@invertase/react-native-apple-authentication';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 import CommonAlert from '../../components/commanAlert';
 
-const Login = ({route}) => {
+const Login = ({ route }) => {
 
-  const {type} = route?.params;
+  const { type } = route?.params;
   console.log(type, 'typetypetype');
   const constants = useRef(null);
+  const [rememberMe, setRememberMe] = useState(false)
+  
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem('savedEmail');
+        const savedPassword = await AsyncStorage.getItem('savedPassword');
+        if (savedEmail || savedPassword) {
+          setInputVal(prev => ({
+            ...prev,
+            email: savedEmail || '',
+            password: savedPassword || '',
+          }));
+          setRememberMe(true); // Checkbox checked if credentials exist
+        }
+      } catch (error) {
+        console.log('Error loading saved credentials', error);
+      }
+    };
+    loadSavedCredentials();
+  }, []);
 
-const setupFCM = async () => {
-  try {
-    const app = getApp();
-    const messaging = getMessaging(app);
 
-    // 1. Register
-    await messaging.registerDeviceForRemoteMessages();
+  const setupFCM = async () => {
+    try {
+      const app = getApp();
+      const messaging = getMessaging(app);
 
-    // 2. Request permission
-    const authStatus = await messaging.requestPermission({
-      sound: true,
-      badge: true,
-      alert: true,
-    });
+      // 1. Register
+      await messaging.registerDeviceForRemoteMessages();
 
-    if (
-      authStatus !== AuthorizationStatus.AUTHORIZED &&
-      authStatus !== AuthorizationStatus.PROVISIONAL
-    ) {
-      console.log("❌ Push permission not granted");
+      // 2. Request permission
+      const authStatus = await messaging.requestPermission({
+        sound: true,
+        badge: true,
+        alert: true,
+      });
+
+      if (
+        authStatus !== AuthorizationStatus.AUTHORIZED &&
+        authStatus !== AuthorizationStatus.PROVISIONAL
+      ) {
+        console.log("❌ Push permission not granted");
+        return null;
+      }
+
+      // 3. Delay for iOS
+      if (Platform.OS === "ios") {
+        await new Promise(res => setTimeout(res, 1000));
+      }
+
+      // 4. Get FCM token
+      const fcmToken = await messaging.getToken();
+      setInputVal({ ...inputVal, token: fcmToken })
+      console.log("✅ Got FCM token:", fcmToken);
+      return fcmToken;
+    } catch (e) {
+      console.log("🚨 Error in setupFCM:", e);
       return null;
     }
+  };
 
-    // 3. Delay for iOS
-    if (Platform.OS === "ios") {
-      await new Promise(res => setTimeout(res, 1000));
-    }
-
-    // 4. Get FCM token
-    const fcmToken = await messaging.getToken();
-    setInputVal({...inputVal,token:fcmToken})
-    console.log("✅ Got FCM token:", fcmToken);
-    return fcmToken;
-  } catch (e) {
-    console.log("🚨 Error in setupFCM:", e);
-    return null;
-  }
-};
-
- useEffect(() => {
+  useEffect(() => {
     setupFCM();
   }, []);
 
@@ -104,7 +127,7 @@ const setupFCM = async () => {
     password: '',
     token: '',
   });
-  
+
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -115,12 +138,12 @@ const setupFCM = async () => {
   }, []);
 
   const handleChange = (name, value) => {
-    setInputVal({...inputVal, [name]: value});
+    setInputVal({ ...inputVal, [name]: value });
   };
 
   const handleGoogleLogin = async () => {
     try {
-      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const userInfo = await GoogleSignin.signIn();
       let params = {
         name: userInfo.user.name,
@@ -167,7 +190,7 @@ const setupFCM = async () => {
           });
         }
       })
-      .catch(errrr => {});
+      .catch(errrr => { });
   };
 
   const handleAppleLogin = async () => {
@@ -184,7 +207,7 @@ const setupFCM = async () => {
         Alert.alert(
           'Not Supported',
           'Apple Sign In requires iOS 13 or later. Please use email/password or Google login.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         );
         return;
       }
@@ -206,7 +229,7 @@ const setupFCM = async () => {
 
       if (credentialState === appleAuth.State.AUTHORIZED) {
         // User is authenticated - extract user data
-        const {identityToken, email, fullName, user} = appleAuthRequestResponse;
+        const { identityToken, email, fullName, user } = appleAuthRequestResponse;
 
         // Validate that we have proper user information
         let userName = '';
@@ -249,7 +272,7 @@ const setupFCM = async () => {
             'Apple Sign In credentials not found. Please try again.';
         }
 
-        Alert.alert('Authentication Failed', errorMessage, [{text: 'OK'}]);
+        Alert.alert('Authentication Failed', errorMessage, [{ text: 'OK' }]);
       }
     } catch (error) {
       setIsLoading(false);
@@ -264,25 +287,25 @@ const setupFCM = async () => {
         Alert.alert(
           'Sign In Failed',
           'Apple Sign In failed. Please check your internet connection and try again.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         );
       } else if (error.code === appleAuth.Error.INVALID_RESPONSE) {
         Alert.alert(
           'Invalid Response',
           'Received invalid response from Apple. Please try again.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         );
       } else if (error.code === appleAuth.Error.NOT_HANDLED) {
         Alert.alert(
           'Not Supported',
           'Apple Sign In is not properly configured. Please use email/password login.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         );
       } else {
         Alert.alert(
           'Sign In Error',
           'Apple Sign In encountered an unexpected error. Please try again or use email/password login.',
-          [{text: 'OK'}],
+          [{ text: 'OK' }],
         );
       }
     }
@@ -361,11 +384,11 @@ const setupFCM = async () => {
       fcm: inputVal.token,
       type,
     };
-console.log(payload, 'payloadpayloadpayload');
+    console.log(payload, 'payloadpayloadpayload');
 
     setIsLoading(true);
     loginUser(payload)
-      .then(response => {
+      .then(async response => {
         setIsLoading(false);
         if (response && response.status == 200) {
           let data = response.data.data;
@@ -373,6 +396,14 @@ console.log(payload, 'payloadpayloadpayload');
           dispatch(setUserData(data));
           AsyncStorage.setItem('userData', JSON.stringify(data));
           AsyncStorage.setItem('token', JSON.stringify(token));
+
+          if (rememberMe) {
+            await AsyncStorage.setItem('savedEmail', inputVal.email);
+            await AsyncStorage.setItem('savedPassword', inputVal.password);
+          } else {
+            await AsyncStorage.removeItem('savedEmail');
+            await AsyncStorage.removeItem('savedPassword');
+          }
         } else {
           constants.current.isVisible({
             status: 'error',
@@ -391,15 +422,15 @@ console.log(payload, 'payloadpayloadpayload');
     <>
       <CommonAlert ref={constants} />
       <Loader isLoading={isLoading} />
-      <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
         <AppHeader
           height={width(20)}
           heading={`Login As ${type == 'hire' ? 'Customer' : 'Worker'}`}
           headingColor={appColors.white}
-          leftIconStyle={{height: 27, width: 27}}
+          leftIconStyle={{ height: 27, width: 27 }}
           leftIcon={appIcons.goBackIcon}
         />
-        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           <View
             style={{
               flex: 1,
@@ -413,8 +444,8 @@ console.log(payload, 'payloadpayloadpayload');
                 textAlign: 'left',
                 paddingHorizontal: width(3),
               }}></Text>
-            <View style={{justifyContent: 'center', alignItems: 'center'}}>
-              <View style={{marginTop: width(5), width: width(95)}}>
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ marginTop: width(5), width: width(95) }}>
                 <InputField
                   placeholder="Email"
                   placeholderTextColor={appColors.gray}
@@ -422,7 +453,7 @@ console.log(payload, 'payloadpayloadpayload');
                   onChangeText={value => handleChange('email', value)}
                 />
               </View>
-              <View style={{marginTop: width(5), width: width(95)}}>
+              <View style={{ marginTop: width(5), width: width(95) }}>
                 <InputField
                   placeholder={'Password'}
                   placeholderTextColor={appColors.gray}
@@ -439,8 +470,36 @@ console.log(payload, 'payloadpayloadpayload');
                   onEndIconPress={() => setShowPass(!showPass)}
                 />
               </View>
+
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  width: width(95),
+                  marginTop: width(2),
+                }}>
+                <Switch
+                  value={rememberMe}
+                  onValueChange={value => setRememberMe(value)}
+                  trackColor={{
+                    false: appColors.gray,
+                    true: appColors.lightMehroon,
+                  }}
+                  thumbColor={appColors.white}
+                />
+                <Text
+                  style={{
+                    marginLeft: width(2),
+                    fontFamily: fontFamily.poppinsRegular,
+                    color: appColors.black,
+                  }}>
+                  Remember Me
+                </Text>
+              </View>
+
               <TouchableOpacity
-                onPress={() => navigation.navigate('ForgetPassword', {type})}>
+                onPress={() => navigation.navigate('ForgetPassword', { type })}>
                 <Text
                   style={{
                     fontFamily: fontFamily.poppinsSemiBold,
@@ -495,13 +554,13 @@ console.log(payload, 'payloadpayloadpayload');
                     marginVertical: width(3),
                   }}
                 />
-                <Text
+                {/* <Text
                   style={{
                     fontFamily: fontFamily.poppinsBold,
                     color: appColors.black,
                   }}>
                   or use social sign up
-                </Text>
+                </Text> */}
 
                 <View
                   style={{
@@ -529,7 +588,7 @@ console.log(payload, 'payloadpayloadpayload');
                       <Image
                         source={appIcons.googleIcon}
                         resizeModed="contain"
-                        style={{height: width(10), width: width(10)}}
+                        style={{ height: width(10), width: width(10) }}
                       />
                     }
                     buttonContainer={{
@@ -554,7 +613,7 @@ console.log(payload, 'payloadpayloadpayload');
                         <Image
                           source={appIcons.appleIcon}
                           resizeModed="contain"
-                          style={{height: width(10), width: width(10)}}
+                          style={{ height: width(10), width: width(10) }}
                         />
                       }
                       buttonContainer={{
@@ -584,7 +643,7 @@ console.log(payload, 'payloadpayloadpayload');
                 </Text>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Registration', type)}
-                  style={{marginLeft: width(2)}}>
+                  style={{ marginLeft: width(2) }}>
                   <Text
                     style={{
                       fontFamily: fontFamily.poppinsBold,
