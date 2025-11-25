@@ -300,73 +300,6 @@ const SearchScreen = ({route}) => {
     );
   };
 
-  // const handleChangeJobField = (index, field, value) => {
-  //   setJobTitles(prev =>
-  //     prev.map((job, i) => {
-  //       if (i === index) {
-  //         let updatedJob = {...job};
-
-  //         // Reset job
-  //         if (field === 'resetJob' && value) {
-  //           return {
-  //             ...updatedJob,
-  //             isSelected: false,
-  //             requiredPeoples: 1,
-  //             startDate: '',
-  //             endDate: '',
-  //             startTime: '',
-  //             endTime: '',
-  //             totalHours: '',
-  //           };
-  //         }
-
-  //         // Check if dates are selected before allowing time selection
-  //         if (
-  //           (field === 'startTime' || field === 'endTime') &&
-  //           (!updatedJob.startDate || !updatedJob.endDate)
-  //         ) {
-  //           constants.current.isVisible({
-  //             status: 'error',
-  //             message:
-  //               'Please select start and end dates before selecting times.',
-  //           });
-  //           return job;
-  //         }
-
-  //         // Format startTime/endTime
-  //         if (field === 'startTime' || field === 'endTime') {
-  //           const formattedTime = moment(value).format('hh:00 A');
-  //           updatedJob[field] = formattedTime;
-
-  //           // Reset endTime if startTime changes
-  //           if (field === 'startTime') {
-  //             updatedJob.endTime = '';
-  //             updatedJob.totalHours = '';
-  //           }
-
-  //           // Calculate totalHours if both start and end time exist
-  //           if (updatedJob.startTime && updatedJob.endTime) {
-  //             let startMoment = moment(updatedJob.startTime, 'hh:mm A');
-  //             let endMoment = moment(updatedJob.endTime, 'hh:mm A');
-
-  //             if (endMoment.isBefore(startMoment)) {
-  //               endMoment.add(1, 'day'); // overnight handling
-  //             }
-
-  //             const totalHours = endMoment.diff(startMoment, 'hours', true);
-  //             updatedJob.totalHours = totalHours.toFixed(); // ✅ string or number
-  //           }
-  //         } else {
-  //           updatedJob[field] = value;
-  //         }
-
-  //         return updatedJob;
-  //       }
-  //       return job;
-  //     }),
-  //   );
-  // };
-
   const handleAdd = async () => {
     const selectedJobs = jobTitles?.filter(job => job.isSelected);
 
@@ -623,27 +556,11 @@ const SearchScreen = ({route}) => {
               <TouchableOpacity
                 style={styles.button}
                 onPress={() => {
-                  if (item.requiredPeoples === 1) {
-                    // Show alert before removing job
-                    constants.current.isVisible({
-                      status: 'confirm',
-                      message:
-                        'Are you sure you want to remove this job from your order list?',
-                      handlePressOk: () => {
-                        // Reset job fields
-                        handleChangeJobField(index, 'resetJob', true);
-                      },
-                      handlePressCancel: () => {
-                        // Do nothing, user cancelled
-                      },
-                    });
-                  } else {
-                    handleChangeJobField(
-                      index,
-                      'requiredPeoples',
-                      Math.max(item.requiredPeoples - 1, 1),
-                    );
-                  }
+                  handleChangeJobField(
+                    index,
+                    'requiredPeoples',
+                    Math.max(item.requiredPeoples - 1, 1),
+                  );
                 }}>
                 <Entypo name="minus" color={appColors.black} size={15} />
               </TouchableOpacity>
