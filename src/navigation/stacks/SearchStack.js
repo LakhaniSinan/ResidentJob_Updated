@@ -9,6 +9,7 @@ import Registration from '../../containers/auth/Registration';
 import ResetPassword from '../../containers/auth/ResetPassword';
 import VerifyOTP from '../../containers/auth/VerifyOTP';
 import {ChangePassword} from '../../services/authentication';
+import TermsAndCondition from '../../containers/app/termsAndCondition';
 
 const Stack = createStackNavigator();
 
@@ -98,6 +99,14 @@ function SearchStack() {
         }}
         name="ChangePassword"
         component={ChangePassword}
+      />
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          tabBarVisible: false,
+        }}
+        name="TermsAndCondition"
+        component={TermsAndCondition}
       />
     </Stack.Navigator>
   );

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   BackHandler,
   Platform,
@@ -14,24 +14,24 @@ import {
   View,
   Switch,
 } from 'react-native';
-import { width } from 'react-native-dimension';
+import {width} from 'react-native-dimension';
 import {
   checkNotifications,
   requestNotifications,
 } from 'react-native-permissions';
-import { useDispatch } from 'react-redux';
-import { fontFamily } from '../../../assets';
+import {useDispatch} from 'react-redux';
+import {fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
 import InputField from '../../../components/textInput';
-import { appColors } from '../../../constants';
-import { setUserData } from '../../../redux/slices/Login';
-import { loginUser } from '../../../services/authentication';
+import {appColors} from '../../../constants';
+import {setUserData} from '../../../redux/slices/Login';
+import {loginUser} from '../../../services/authentication';
 
-const Login = ({ route }) => {
-  const { type } = route?.params || { type: 'hire' };
+const Login = ({route}) => {
+  const {type} = route?.params || {type: 'hire'};
   const constants = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
@@ -66,7 +66,7 @@ const Login = ({ route }) => {
   }, []);
 
   const handleChange = (name, value) => {
-    setInputVal({ ...inputVal, [name]: value });
+    setInputVal({...inputVal, [name]: value});
   };
 
   const handleLogin = async () => {
@@ -106,7 +106,7 @@ const Login = ({ route }) => {
           await AsyncStorage.removeItem('savedPassword');
         }
 
-        navigation.reset({ index: 0, routes: [{ name: 'HomeBottom' }] });
+        navigation.reset({index: 0, routes: [{name: 'HomeBottom'}]});
       } else {
         constants.current.isVisible({
           status: 'error',
@@ -124,17 +124,17 @@ const Login = ({ route }) => {
     <>
       <CommonAlert ref={constants} />
       <Loader isLoading={isLoading} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
+      <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
         <AppHeader
           height={width(20)}
           heading={`Login As ${type === 'hire' ? 'Customer' : 'Worker'}`}
           headingColor={appColors.white}
-          leftIconStyle={{ height: 27, width: 27 }}
+          leftIconStyle={{height: 27, width: 27}}
         />
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <View style={{ flex: 1, justifyContent: 'space-evenly' }}>
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <View style={{ marginTop: width(5), width: width(95) }}>
+        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+          <View style={{flex: 1, justifyContent: 'space-evenly'}}>
+            <View style={{justifyContent: 'center', alignItems: 'center'}}>
+              <View style={{marginTop: width(5), width: width(95)}}>
                 <InputField
                   placeholder="Email"
                   placeholderTextColor={appColors.gray}
@@ -142,7 +142,7 @@ const Login = ({ route }) => {
                   onChangeText={value => handleChange('email', value)}
                 />
               </View>
-              <View style={{ marginTop: width(5), width: width(95) }}>
+              <View style={{marginTop: width(5), width: width(95)}}>
                 <InputField
                   placeholder="Password"
                   placeholderTextColor={appColors.gray}
@@ -188,7 +188,7 @@ const Login = ({ route }) => {
               </View>
 
               <TouchableOpacity
-                onPress={() => navigation.navigate('ForgetPassword', { type })}>
+                onPress={() => navigation.navigate('ForgetPassword', {type})}>
                 <Text
                   style={{
                     fontFamily: fontFamily.poppinsSemiBold,
@@ -201,7 +201,7 @@ const Login = ({ route }) => {
                 </Text>
               </TouchableOpacity>
 
-              <View style={{ width: width(95) }}>
+              <View style={{width: width(95)}}>
                 <Button
                   btnTitle="Login"
                   btnTextStyle={{
@@ -218,6 +218,32 @@ const Login = ({ route }) => {
                     paddingVertical: width(3),
                   }}
                 />
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginVertical: width(10),
+                }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.poppinsRegular,
+                    color: appColors.black,
+                  }}>
+                  Don’t have account?
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Registration', type)}
+                  style={{marginLeft: width(2)}}>
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.poppinsBold,
+                      color: appColors.blue,
+                      textDecorationLine: 'underline',
+                    }}>
+                    Sign Up
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
