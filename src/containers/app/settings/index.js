@@ -180,15 +180,17 @@ const Settings = ({route}) => {
     updateProfile(params, inputs.userId)
       .then(response => {
         if (response.status === 201 || response.status === 200) {
+          console.log(response?.data,"esponse?.data?esponse?.data?");
+          
           constants.current.isVisible({
             status: 'ok',
             message: response.data.message,
             handlePressOk: () => {
               constants.current.backdropPress();
-              dispatch(setUserData(response?.data?.daata));
+              dispatch(setUserData(response?.data?.data));
               AsyncStorage.setItem(
                 'userData',
-                JSON.stringify(response?.data?.daata),
+                JSON.stringify(response?.data?.data),
               );
             },
           });

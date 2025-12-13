@@ -733,6 +733,61 @@ const ProfileScreen = () => {
     //   Alert.alert('Error', 'At least one experience entry is required');
     //   return;
     // } else {
+    console.log(formData?.dateOfBirth, 'ormData?.dateOfBirth');
+
+    if (!formData.image) {
+      Alert.alert('Error', 'Please upload profile image');
+      return;
+    }
+    if (!formData.firstname) {
+      Alert.alert('Error', 'Please enter first name');
+      return;
+    }
+    if (!formData.lastname) {
+      Alert.alert('Error', 'Please enter last name');
+      return;
+    }
+    if (!formData.email) {
+      Alert.alert('Error', 'Please enter email');
+      return;
+    }
+    if (!formData.contact) {
+      Alert.alert('Error', 'Please enter contact number');
+      return;
+    }
+    if (!formData?.aboutMe) {
+      Alert.alert('Error', 'Please enter about details');
+      return;
+    }
+    if (!formData?.gender) {
+      Alert.alert('Error', 'Please select gender');
+      return;
+    }
+    if (!formData?.employmentStatus) {
+      // Alert.alert('Error', 'Please select gender');
+      Alert.alert('Error', 'Please select employment status');
+      return;
+    }
+    if (!formData?.educationalLevel) {
+      // Alert.alert('Error', 'Please select gender');
+      Alert.alert('Error', 'Please select education level');
+      return;
+    }
+    if (!formData?.dateOfBirth) {
+      // Alert.alert('Error', 'Please select gender');
+      Alert.alert('Error', 'Please select date of birth');
+      return;
+    }
+    if (!formData?.dateOfBirth) {
+      // Alert.alert('Error', 'Please select gender');
+      Alert.alert('Error', 'Please select date of birth');
+      return;
+    }
+    if (!formData.category) {
+      // Alert.alert('Error', 'Please select gender');
+      Alert.alert('Error', 'Please select date of birth');
+      return;
+    }
     try {
       let params = {
         jobSeekerId: user?.userDetails?._id,
@@ -781,6 +836,8 @@ const ProfileScreen = () => {
           },
         });
       } else {
+        console.log(responce.data, 'responce.data');
+
         constants.current.isVisible({
           status: 'error',
           message: responce.data.message,
@@ -1783,8 +1840,12 @@ const ProfileScreen = () => {
           open={openDate}
           date={new Date()}
           onConfirm={date => {
+            console.log('RAW:', date);
+            console.log('TYPE:', typeof date);
+            console.log('STRING:', String(date));
+            console.log('ISO:', date?.toISOString?.());
             setOpenDate(false);
-            handleChange('dateOfBirth', date);
+            handleChange('dateOfBirth', date.toISOString());
           }}
           onCancel={() => {
             setOpenDate(false);

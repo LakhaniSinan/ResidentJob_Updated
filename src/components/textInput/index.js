@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { width } from 'react-native-dimension';
-import { Divider, Menu } from 'react-native-paper';
+import React, {useState} from 'react';
+import {Text, TextInput, TouchableOpacity, Keyboard, View} from 'react-native';
+import {width} from 'react-native-dimension';
+import {Divider, Menu} from 'react-native-paper';
 // import MaterialIcons from '@react-native-vector-icons/material-icons';
-import { fontFamily } from '../../assets';
-import { appColors } from '../../constants';
+import {fontFamily} from '../../assets';
+import {appColors} from '../../constants';
 
 const InputField = ({
   multiline,
@@ -88,6 +88,8 @@ const InputField = ({
           editable={isEditable}
           autoCapitalize="none"
           textContentType={textContentType}
+          onSubmitEditing={() => Keyboard.dismiss()}
+          returnKeyType="done"
           style={{
             ...style,
             flex: 1,
