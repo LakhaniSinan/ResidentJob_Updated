@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Image,
   SafeAreaView,
@@ -11,14 +11,15 @@ import {
   Linking,
   Alert,
   Platform,
+  PermissionsAndroid
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
-import {width} from 'react-native-dimension';
+import { width } from 'react-native-dimension';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Entypo from '@react-native-vector-icons/entypo';
 // import MaterialCommunityIcons from '@react-native-vector-icons/material-community';
-import {useDispatch, useSelector} from 'react-redux';
-import {appIcons, fontFamily} from '../../assets';
+import { useDispatch, useSelector } from 'react-redux';
+import { appIcons, fontFamily } from '../../assets';
 import AppHeader from '../../components/appHeader';
 import Button from '../../components/button';
 import CommonAlert from '../../components/commanAlert';
@@ -27,12 +28,12 @@ import CustomPicker from '../../components/customPicker';
 import Loader from '../../components/loader';
 import PhoneInputComponent from '../../components/phoneInput';
 import InputField from '../../components/textInput';
-import {appColors} from '../../constants';
-import {helper} from '../../helper';
-import {setUserData} from '../../redux/slices/Login';
-import {GetCategory, GetJobTitle} from '../../services/authentication';
-import {updateDetails} from '../../services/profile';
-import {styles} from './style';
+import { appColors } from '../../constants';
+import { helper } from '../../helper';
+import { setUserData } from '../../redux/slices/Login';
+import { GetCategory, GetJobTitle } from '../../services/authentication';
+import { updateDetails } from '../../services/profile';
+import { styles } from './style';
 import {
   request,
   check,
@@ -41,28 +42,28 @@ import {
   RESULTS,
 } from 'react-native-permissions';
 
-const genders = [{name: 'Male'}, {name: 'Female'}, {name: 'Others'}];
+const genders = [{ name: 'Male' }, { name: 'Female' }, { name: 'Others' }];
 const national = [
-  {name: 'Not Applicable'},
-  {name: 'Awaiting Enlistment'},
-  {name: 'Others'},
-  {name: 'Serving'},
-  {name: 'Completed'},
-  {name: 'Exempted'},
+  { name: 'Not Applicable' },
+  { name: 'Awaiting Enlistment' },
+  { name: 'Others' },
+  { name: 'Serving' },
+  { name: 'Completed' },
+  { name: 'Exempted' },
 ];
-const employmentStatus = [{name: 'Employed'}, {name: 'Unemployed'}];
+const employmentStatus = [{ name: 'Employed' }, { name: 'Unemployed' }];
 const educationLevel = [
-  {name: 'DIPLOMA'},
-  {name: 'MAPAQ'},
-  {name: 'CERTIFICATE'},
-  {name: 'HASP'},
+  { name: 'DIPLOMA' },
+  { name: 'MAPAQ' },
+  { name: 'CERTIFICATE' },
+  { name: 'HASP' },
 ];
 const ProfileScreen = () => {
   const dispatch = useDispatch();
   const constants = useRef(null);
   const jobPickerRef = useRef();
   const genderRef = useRef();
-  const {user} = useSelector(state => state.LoginSlice);
+  const { user } = useSelector(state => state.LoginSlice);
   const [selectedCuisines, setSelectedCuisines] = useState([]);
   const [categories, setCategories] = useState([]);
   const nationalRef = useRef();
@@ -84,6 +85,54 @@ const ProfileScreen = () => {
   const [selectedExpIndex, setSelectedExpIndex] = useState(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+
+
+  const pickImage = async () => {
+    try {
+      // ---------- ANDROID PERMISSIONS ----------
+      if (Platform.OS === "android") {
+        const androidVersion = Platform.Version;
+
+        let permission =
+          androidVersion >= 33
+            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
+            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+
+        const granted = await PermissionsAndroid.request(permission, {
+          title: "Media Permission Required",
+          message: "The app needs access to your media to select photos.",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK",
+        });
+
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert("Permission Required", "Camera or media permission required");
+          return null;
+        }
+      }
+
+      // ---------- OPEN GALLERY ----------
+      const image = await ImageCropPicker.openPicker({
+        width: 600,
+        height: 600,
+        cropping: true,
+        compressImageQuality: 0.8,
+        mediaType: "photo",
+      });
+
+      return image;
+    } catch (error) {
+      if (error.code === "E_PERMISSION_MISSING") {
+        Alert.alert("Permission Missing", "Please enable media permission");
+        return null;
+      }
+
+      console.log("Image Picker Error:", error);
+      return null;
+    }
+  };
+
 
   const [formData, setFormData] = useState({
     // section#01
@@ -252,7 +301,7 @@ const ProfileScreen = () => {
           setCategories(response.data.data);
         }
       })
-      .catch(error => {})
+      .catch(error => { })
       .finally(() => {
         setIsLoading(false);
       });
@@ -327,7 +376,7 @@ const ProfileScreen = () => {
 
   const handleChange = (name, value) => {
     setFormData(prev => {
-      const next = {...prev};
+      const next = { ...prev };
 
       if (name === 'workPass') {
         next.workPass = value;
@@ -374,195 +423,178 @@ const ProfileScreen = () => {
     return versionMap[release] || parseInt(release);
   };
 
+  const requestGalleryPermission = async () => {
+    try {
+      if (Platform.OS === "android") {
+        // Android 13+ uses READ_MEDIA_IMAGES
+        const androidVersion = Platform.Version;
+
+        let permission =
+          androidVersion >= 33
+            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
+            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+
+        const granted = await PermissionsAndroid.request(permission, {
+          title: "Media Permission Required",
+          message: "This app needs access to your photos to continue",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK"
+        });
+
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert("Permission Required", "Camera or media permission required");
+          return null;
+        }
+      }
+
+      // iOS does not need manual permission request, picker handles it
+      const result = await launchImageLibrary({
+        mediaType: "photo",
+        quality: 0.8,
+      });
+
+      if (result.didCancel) return null;
+      return result.assets?.[0] || null;
+
+    } catch (error) {
+      console.error("Permission error:", error);
+      Alert.alert("Error", "Something went wrong while accessing media");
+      return null;
+    }
+  };
+
   const requestCameraPermission = async () => {
     try {
-      if (Platform.OS === 'android') {
-        console.log('Requesting Android permissions...');
+      if (Platform.OS !== "android") return true;
 
-        // Get Android API level
-        const apiLevel = getAndroidAPILevel();
-        const androidVersion = Platform.constants.Release;
-        console.log('Android version:', androidVersion, 'API Level:', apiLevel);
+      // Android 13+ (API 33+)
+      if (Platform.Version >= 33) {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        ]);
 
-        let permissionsToRequest = [PERMISSIONS.ANDROID.CAMERA];
-
-        // Handle different Android versions for storage permissions
-        if (apiLevel >= 33) {
-          // Android 13+ (API 33+): Use granular media permissions
-          permissionsToRequest.push(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
-          console.log('Using Android 13+ media permissions (API 33+)');
-        } else if (apiLevel >= 31) {
-          // Android 12+ (API 31-32): Still use READ_EXTERNAL_STORAGE but with special handling
-          permissionsToRequest.push(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-          console.log('Using Android 12+ storage permissions (API 31-32)');
-        } else {
-          // Android 11 and below: Traditional storage permissions
-          permissionsToRequest.push(PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE);
-          permissionsToRequest.push(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-          console.log('Using legacy storage permissions (API ≤30)');
-        }
-
-        // First check current status of permissions
-        const currentStatus = await Promise.all(
-          permissionsToRequest.map(permission => check(permission)),
+        return (
+          granted["android.permission.CAMERA"] === "granted" &&
+          granted["android.permission.READ_MEDIA_IMAGES"] === "granted"
         );
-
-        console.log('Current permission status:', currentStatus);
-
-        // Check if all permissions are already granted
-        const alreadyGranted = currentStatus.every(
-          status => status === RESULTS.GRANTED,
-        );
-
-        if (alreadyGranted) {
-          console.log('All permissions already granted');
-          return true;
-        }
-
-        // Request only the permissions that are not granted
-        const results = await Promise.all(
-          permissionsToRequest.map(permission => request(permission)),
-        );
-
-        console.log('Permission results:', results);
-
-        // Check if all permissions are granted
-        const allGranted = results.every(result => result === RESULTS.GRANTED);
-
-        if (!allGranted) {
-          console.log('Some permissions were denied');
-
-          // Check if any permission was permanently denied
-          const hasBlocked = results.some(result => result === RESULTS.BLOCKED);
-
-          if (hasBlocked) {
-            Alert.alert(
-              'Permission Required',
-              'Camera and storage permissions are required to upload images. Please enable them in settings.',
-              [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Open Settings',
-                  onPress: () =>
-                    openSettings().catch(() => Linking.openSettings()),
-                },
-              ],
-            );
-          } else {
-            Alert.alert(
-              'Permission Required',
-              'Camera and storage permissions are required to upload images.',
-              [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Grant Permission',
-                  onPress: () => requestCameraPermission(),
-                },
-              ],
-            );
-          }
-          return false;
-        }
-
-        console.log('All permissions granted successfully');
       }
-      return true;
-    } catch (error) {
-      console.log('Permission request error:', error);
-      Alert.alert('Error', 'Failed to request permissions. Please try again.');
+
+      // Android 11/12 (API 30-32)
+      if (Platform.Version >= 30) {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        ]);
+
+        return (
+          granted["android.permission.CAMERA"] === "granted" &&
+          granted["android.permission.READ_EXTERNAL_STORAGE"] === "granted"
+        );
+      }
+
+      // Android 10 and below
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+
+      return Object.values(granted).every(x => x === "granted");
+
+    } catch (err) {
+      console.log("Permission error:", err);
       return false;
     }
   };
 
   const handleImagePick = async type => {
-    try {
-      console.log('Image pick started for type:', type);
+    const img = await pickImage();
+    if (!img) return;
 
-      // Request permissions first
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        console.log('Permission denied');
-        return;
-      }
+    console.log("Selected Image:", img);
+    let params = {
+      uri: img.path,
+      type: img.mime,
+      name: img.modificationDate || img.filename || "image.jpg",
+    };
 
-      console.log('Opening image picker...');
-      let resssss = await ImageCropPicker.openPicker({
-        width: 300,
-        height: 400,
-        cropping: true,
-        mediaType: 'photo',
-        includeBase64: false,
-        quality: 0.8,
-        compressImageMaxWidth: 1000,
-        compressImageMaxHeight: 1000,
-        compressImageQuality: 0.8,
-        loadingLabelText: 'Processing...',
-        showsSelectedCount: false,
-        forceJpg: true,
-        enableRotationGesture: true,
-        hideBottomControls: false,
-        useFrontCamera: false,
-        writeTempFile: true,
-      });
+    console.log("Image params prepared:", params);
 
-      console.log('Image picker result:', resssss);
+    await uploadImageToCloudinary(type, params);
+    // try {
+    //   console.log('Image pick started for type:', type);
 
-      if (resssss && resssss.path) {
-        let params = {
-          uri: resssss.path,
-          type: resssss.mime,
-          name: resssss.modificationDate || resssss.filename || 'image',
-        };
-        console.log('Image params prepared:', params);
-        await uploadImageToCloudinary(type, params);
-      } else {
-        console.log('No image selected or invalid result');
-        Alert.alert('Error', 'No image selected');
-      }
-    } catch (error) {
-      console.log('Image pick error:', error);
-      if (error.code === 'E_PICKER_CANCELLED') {
-        console.log('User cancelled image picker');
-        // User cancelled, no need to show error
-        return;
-      }
+    //   // Request correct Android permissions
+    //   const hasPermission = await requestCameraPermission();
+    //   if (!hasPermission) {
+    //     console.log('Permission denied');
+    //     Alert.alert('Permission Denied', 'Camera or media permission is required.');
+    //     return;
+    //   }
 
-      // Try fallback method for Android 12+ if primary method fails
-      if (Platform.OS === 'android' && error.code !== 'E_PICKER_CANCELLED') {
-        console.log('Trying fallback image picker...');
-        try {
-          let fallbackResult = await ImageCropPicker.openPicker({
-            mediaType: 'photo',
-            includeBase64: false,
-            quality: 0.8,
-            cropping: false, // Disable cropping as fallback
-            multiple: false,
-            writeTempFile: true,
-          });
+    //   console.log('Opening image picker...');
 
-          if (fallbackResult && fallbackResult.path) {
-            let params = {
-              uri: fallbackResult.path,
-              type: fallbackResult.mime,
-              name:
-                fallbackResult.modificationDate ||
-                fallbackResult.filename ||
-                'image',
-            };
-            console.log('Fallback image params prepared:', params);
-            await uploadImageToCloudinary(type, params);
-            return;
-          }
-        } catch (fallbackError) {
-          console.log('Fallback method also failed:', fallbackError);
-        }
-      }
+    //   let result;
 
-      Alert.alert(
-        'Error',
-        'Failed to pick image. Please check your permissions and try again.',
-      );
-    }
+    //   // If user wants CAMERA
+    //   if (type === "camera") {
+    //     result = await ImageCropPicker.openCamera({
+    //       width: 300,
+    //       height: 400,
+    //       cropping: true,
+    //       mediaType: "photo",
+    //       includeBase64: false,
+    //       compressImageQuality: 0.8,
+    //       forceJpg: true,
+    //       writeTempFile: true,
+    //     });
+    //   }
+
+    //   // If user wants GALLERY
+    //   else {
+    //     result = await ImageCropPicker.openPicker({
+    //       width: 300,
+    //       height: 400,
+    //       cropping: true,
+    //       mediaType: "photo",
+    //       includeBase64: false,
+    //       compressImageQuality: 0.8,
+    //       forceJpg: true,
+    //       writeTempFile: true,
+    //     });
+    //   }
+
+    //   console.log("Image picker result:", result);
+
+    //   if (result && result.path) {
+    //     let params = {
+    //       uri: result.path,
+    //       type: result.mime,
+    //       name: result.modificationDate || result.filename || "image.jpg",
+    //     };
+
+    //     console.log("Image params prepared:", params);
+
+    //     await uploadImageToCloudinary(type, params);
+    //   } else {
+    //     Alert.alert("Error", "No image selected.");
+    //   }
+
+    // } catch (error) {
+    //   console.log("Image pick error:", error);
+
+    //   if (error.code === "E_PICKER_CANCELLED") {
+    //     console.log("User cancelled image picker");
+    //     return;
+    //   }
+
+    //   Alert.alert(
+    //     "Error",
+    //     "Failed to pick image. Please check your permissions and try again."
+    //   );
+    // }
   };
 
   const uploadImageToCloudinary = async (type, image) => {
@@ -793,7 +825,7 @@ const ProfileScreen = () => {
   };
 
   const handleJobSelect = (name, id) => {
-    setFormData({...formData, category: id});
+    setFormData({ ...formData, category: id });
     setSelectedJob(name);
   };
 
@@ -829,13 +861,13 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
       <Loader isLoading={isLoading} />
       <AppHeader
         height={width(20)}
         heading={'Profile Screen'}
         headingColor={appColors.white}
-        leftIconStyle={{height: 27, width: 27}}
+        leftIconStyle={{ height: 27, width: 27 }}
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -854,7 +886,7 @@ const ProfileScreen = () => {
             }}>
             <Image
               source={
-                formData?.image ? {uri: formData?.image} : appIcons.accountIcon
+                formData?.image ? { uri: formData?.image } : appIcons.accountIcon
               }
               resizeMode="cover"
               style={{
@@ -878,7 +910,7 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
 
-          <View style={{marginTop: width(4)}}>
+          <View style={{ marginTop: width(4) }}>
             <InputField
               value={formData.firstname}
               placeholder="First Name"
@@ -887,7 +919,7 @@ const ProfileScreen = () => {
             />
           </View>
 
-          <View style={{marginTop: width(2)}}>
+          <View style={{ marginTop: width(2) }}>
             <InputField
               value={formData.lastname}
               placeholder="Last Name"
@@ -896,7 +928,7 @@ const ProfileScreen = () => {
             />
           </View>
 
-          <View style={{marginTop: width(2)}}>
+          <View style={{ marginTop: width(2) }}>
             <InputField
               placeholder="Email"
               value={formData.email}
@@ -925,7 +957,7 @@ const ProfileScreen = () => {
             }
           />
 
-          <View style={{marginTop: width(3)}}>
+          <View style={{ marginTop: width(3) }}>
             <TouchableOpacity
               onPress={handleCallMe}
               style={{
@@ -940,7 +972,7 @@ const ProfileScreen = () => {
                 name="phone"
                 size={20}
                 color={appColors.white}
-                style={{marginRight: width(2)}}
+                style={{ marginRight: width(2) }}
               />
               <Text
                 style={{
@@ -953,7 +985,7 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
 
-          <View style={{marginTop: width(2)}}>
+          <View style={{ marginTop: width(2) }}>
             <InputField
               placeholder="About me"
               multiline={true}
@@ -964,7 +996,7 @@ const ProfileScreen = () => {
             />
           </View>
 
-          <View style={{marginTop: width(3)}}>
+          <View style={{ marginTop: width(3) }}>
             <CustomCheckBox
               checked={formData.workPass}
               type="checkout"
@@ -992,7 +1024,7 @@ const ProfileScreen = () => {
         <View style={styles.containerStyles}>
           <Text style={styles.containerHeading}>Job Type</Text>
 
-          <View style={{marginTop: width(1)}}>
+          <View style={{ marginTop: width(1) }}>
             <CustomPicker
               ref={jobPickerRef}
               marginVertical={width(4)}
@@ -1074,7 +1106,7 @@ const ProfileScreen = () => {
             }}>
             Graduation Year (expected)
           </Text>
-          <View style={{marginTop: width(3)}}>
+          <View style={{ marginTop: width(3) }}>
             <InputField
               placeholder="Graduation Year (expected)"
               value={formData.expectedYear}
@@ -1083,7 +1115,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('expectedYear', value)}
             />
           </View>
-          <View style={{marginTop: width(1)}}>
+          <View style={{ marginTop: width(1) }}>
             <CustomPicker
               ref={genderRef}
               marginVertical={width(4)}
@@ -1107,7 +1139,7 @@ const ProfileScreen = () => {
               }
             />
           </View> */}
-          <View style={{marginTop: -width(3)}}>
+          <View style={{ marginTop: -width(3) }}>
             <CustomPicker
               ref={employmentStatusRef}
               marginVertical={width(4)}
@@ -1119,7 +1151,7 @@ const ProfileScreen = () => {
               }
             />
           </View>
-          <View style={{marginTop: -width(3)}}>
+          <View style={{ marginTop: -width(3) }}>
             <CustomPicker
               ref={educationLevelRef}
               marginVertical={width(4)}
@@ -1139,7 +1171,7 @@ const ProfileScreen = () => {
           <CustomCheckBox
             checked={formData.volunteering}
             type="checkout"
-            containerStyles={{borderWidth: 1, borderColor: appColors.blue}}
+            containerStyles={{ borderWidth: 1, borderColor: appColors.blue }}
             label="I am interested in volunteering"
             onChange={() =>
               handleChange('volunteering', !formData.volunteering)
@@ -1148,7 +1180,7 @@ const ProfileScreen = () => {
           <CustomCheckBox
             checked={formData.training}
             type="checkout"
-            containerStyles={{borderWidth: 1, borderColor: appColors.blue}}
+            containerStyles={{ borderWidth: 1, borderColor: appColors.blue }}
             label="I am interested in training"
             onChange={() => handleChange('training', !formData.training)}
           />
@@ -1182,7 +1214,7 @@ const ProfileScreen = () => {
           </View>
           {showEducationForm && (
             <>
-              <View style={{marginTop: width(1)}}>
+              <View style={{ marginTop: width(1) }}>
                 <CustomPicker
                   ref={educationRef}
                   marginVertical={width(4)}
@@ -1194,7 +1226,7 @@ const ProfileScreen = () => {
                   }
                 />
               </View>
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <InputField
                   placeholder="Diploma/Certificate/Degree Name"
                   value={formData.degreeName}
@@ -1202,7 +1234,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('degreeName', value)}
                 />
               </View>
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <InputField
                   placeholder="School / Institute"
                   value={formData.school}
@@ -1210,7 +1242,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('school', value)}
                 />
               </View>
-              <Text style={[styles.containerHeading, {marginTop: width(3)}]}>
+              <Text style={[styles.containerHeading, { marginTop: width(3) }]}>
                 Period from - to (year)
               </Text>
               <View
@@ -1219,7 +1251,7 @@ const ProfileScreen = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 }}>
-                <View style={{marginTop: width(2), width: width(40)}}>
+                <View style={{ marginTop: width(2), width: width(40) }}>
                   <InputField
                     placeholder="2022"
                     keyboardType="numeric"
@@ -1228,7 +1260,7 @@ const ProfileScreen = () => {
                     onChangeText={value => handleChange('startDate', value)}
                   />
                 </View>
-                <View style={{marginTop: width(2), width: width(40)}}>
+                <View style={{ marginTop: width(2), width: width(40) }}>
                   <InputField
                     placeholder="2025"
                     keyboardType="numeric"
@@ -1240,7 +1272,7 @@ const ProfileScreen = () => {
               </View>
 
               {/* Add Document Upload Section */}
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <Text style={styles.containerHeading}>Education Documents</Text>
                 <Text
                   style={{
@@ -1272,7 +1304,7 @@ const ProfileScreen = () => {
                       justifyContent: 'center',
                     }}
                     onPress={() => handleImagePick('educationDocument')}>
-                    <Text style={{color: appColors.black}}>Choose File</Text>
+                    <Text style={{ color: appColors.black }}>Choose File</Text>
                   </TouchableOpacity>
                   <Text
                     numberOfLines={1}
@@ -1329,7 +1361,7 @@ const ProfileScreen = () => {
                         </Text>
                       </View>
 
-                      <View style={{flexDirection: 'row'}}>
+                      <View style={{ flexDirection: 'row' }}>
                         <TouchableOpacity
                           onPress={() => onEdit(item, index)}
                           style={{
@@ -1373,7 +1405,7 @@ const ProfileScreen = () => {
                       }}>
                       {item?.degreeName}
                     </Text>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <Text
                         numberOfLines={1}
                         style={{
@@ -1400,7 +1432,7 @@ const ProfileScreen = () => {
 
                     {/* Show document if available */}
                     {item?.document && (
-                      <View style={{marginTop: width(2)}}>
+                      <View style={{ marginTop: width(2) }}>
                         <Text
                           style={{
                             fontFamily: fontFamily.poppinsBold,
@@ -1446,7 +1478,7 @@ const ProfileScreen = () => {
           </View>
           {showExperiencesForm && (
             <>
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <InputField
                   placeholder="Job Title"
                   value={formData.jobTitle}
@@ -1454,7 +1486,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('jobTitle', value)}
                 />
               </View>
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <InputField
                   placeholder="Company Name"
                   value={formData.company}
@@ -1463,7 +1495,7 @@ const ProfileScreen = () => {
                 />
               </View>
 
-              <View style={{marginTop: width(2)}}>
+              <View style={{ marginTop: width(2) }}>
                 <InputField
                   placeholder="Job key responsibilities (point-form)"
                   value={formData.responsibilities}
@@ -1475,7 +1507,7 @@ const ProfileScreen = () => {
                   }
                 />
               </View>
-              <Text style={[styles.containerHeading, {marginTop: width(3)}]}>
+              <Text style={[styles.containerHeading, { marginTop: width(3) }]}>
                 Work period from - to
               </Text>
               <View
@@ -1587,7 +1619,7 @@ const ProfileScreen = () => {
                         </Text>
                       </View>
 
-                      <View style={{flexDirection: 'row'}}>
+                      <View style={{ flexDirection: 'row' }}>
                         <TouchableOpacity
                           onPress={() => onExpEdit(item, index)}
                           style={{
@@ -1690,7 +1722,7 @@ const ProfileScreen = () => {
                   justifyContent: 'center',
                 }}
                 onPress={() => handleImagePick('resume')}>
-                <Text style={{color: appColors.black}}>Choose File</Text>
+                <Text style={{ color: appColors.black }}>Choose File</Text>
               </TouchableOpacity>
               <Text
                 numberOfLines={1}
@@ -1703,6 +1735,10 @@ const ProfileScreen = () => {
               </Text>
             </View>
           </View>
+          {/* <Image
+            style={{ height: 50, width: 50 }}
+            source={{ uri: formData.resumeImage }} /> */}
+
           <View style={{}}>
             <Text
               style={{
@@ -1732,7 +1768,7 @@ const ProfileScreen = () => {
                   justifyContent: 'center',
                 }}
                 onPress={() => handleImagePick('supportingDoc')}>
-                <Text style={{color: appColors.black}}>Choose File</Text>
+                <Text style={{ color: appColors.black }}>Choose File</Text>
               </TouchableOpacity>
               <Text
                 numberOfLines={1}
