@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {
   Image,
   ScrollView,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
+  Keyboard,
 } from 'react-native';
 import {
   CodeField,
@@ -103,6 +104,12 @@ const VerifyOTP = ({route}) => {
         console.error('Error while resending OTP:', error.message || error);
       });
   };
+
+  useEffect(() => {
+    if (value.length === CELL_COUNT) {
+      Keyboard.dismiss();
+    }
+  }, [value]);
 
   return (
     <>

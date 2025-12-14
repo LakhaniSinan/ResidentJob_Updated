@@ -39,16 +39,16 @@ const Navigation = () => {
       let result = DeviceInfo.getBuildNumber();
 
       console.log(result, 'resultresultresult');
-      console.log(result,apiRess,"VADAS");
+      console.log(result,apiRess,apiRess.iosPopup,"VADAS");
       
       if (Platform.OS == 'android') {
         if (Number(result) !== Number(apiRess.androidVersion)) {
-          updateVar.current.isVisible(apiRess);
+          // updateVar.current.isVisible(apiRess);
         } else {
           updateVar.current.backdropPress();
         }
       } else {
-        if (Number(result) !== Number(apiRess.iosVersion)) {
+        if (Number(result) !== Number(apiRess.iosVersion) && apiRess.iosPopup==true) {
           setTimeout(() => {
             updateVar.current.isVisible(apiRess);
           }, 2000);
