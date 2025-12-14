@@ -1,17 +1,17 @@
-import {NavigationContainer} from '@react-navigation/native';
-import React, {useEffect, useRef} from 'react';
-import {Platform} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 import UpdatePopUp from '../components/updatePopup';
 import ProfileScreen from '../containers/profile';
-import {getSettings} from '../services/setting';
+import { getSettings } from '../services/setting';
 import AuthStack from './authStack';
 import CustomerDrawer from './customer/CustomerDrawer';
 import WorkerDrawer from './worker/WorkerDrawer';
 
 const Navigation = () => {
-  const {user} = useSelector(state => state.LoginSlice);
+  const { user } = useSelector(state => state.LoginSlice);
   const updateVar = useRef(null);
 
   useEffect(() => {
@@ -39,16 +39,16 @@ const Navigation = () => {
       let result = DeviceInfo.getBuildNumber();
 
       console.log(result, 'resultresultresult');
-      console.log(result,apiRess,apiRess.iosPopup,"VADAS");
-      
+      console.log(result, apiRess, apiRess.iosPopup, "VADAS");
+
       if (Platform.OS == 'android') {
-        if (Number(result) !== Number(apiRess.androidVersion)) {
+        if (Number(result) !== Number(apiRess.androidVersion) && apiRess.androidPopup == true) {
           // updateVar.current.isVisible(apiRess);
         } else {
           updateVar.current.backdropPress();
         }
       } else {
-        if (Number(result) !== Number(apiRess.iosVersion) && apiRess.iosPopup==true) {
+        if (Number(result) !== Number(apiRess.iosVersion) && apiRess.iosPopup == true) {
           setTimeout(() => {
             updateVar.current.isVisible(apiRess);
           }, 2000);
