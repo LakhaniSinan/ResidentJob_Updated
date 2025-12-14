@@ -37,10 +37,8 @@ const Navigation = () => {
 
     if (apiRess) {
       let result = DeviceInfo.getBuildNumber();
-
       console.log(result, 'resultresultresult');
-      console.log(result, apiRess, apiRess.iosPopup, "VADAS");
-
+      console.log(result,apiRess,apiRess.iosPopup,"VADAS");
       if (Platform.OS == 'android') {
         if (Number(result) !== Number(apiRess.androidVersion) && apiRess.androidPopup == true) {
           // updateVar.current.isVisible(apiRess);
