@@ -1,16 +1,16 @@
 import axios from 'axios';
-import {Platform} from 'react-native';
+import { Platform } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
-import {check, PERMISSIONS} from 'react-native-permissions';
-import {appImages} from '../assets';
-import {notifications} from '../constants/variables';
+import { check, PERMISSIONS } from 'react-native-permissions';
+import { appImages } from '../assets';
+import { notifications } from '../constants/variables';
 
 export const GOOGLE_MAPS_APIKEY = 'AIzaSyAvPVhgFVY2qv4c6kvukvIP2krPJe9dZGA';
 
 export const helper = {
   async getCurrentLocation() {
     return new Promise((resolve, reject) => {
-      Geolocation.getCurrentPosition(resolve, error => reject(error => {}), {
+      Geolocation.getCurrentPosition(resolve, error => reject(error => { }), {
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 10000,
@@ -114,8 +114,7 @@ export const helper = {
           } else {
             console.log('Geocoding failed - API response:', data);
             reject(
-              `Geocoding failed. Status: ${data.status}, Error: ${
-                data.error_message || 'Unknown error'
+              `Geocoding failed. Status: ${data.status}, Error: ${data.error_message || 'Unknown error'
               }`,
             );
           }
@@ -136,59 +135,53 @@ export const helper = {
     });
   },
 
-  async ImageUploadService(imagee) {
+
+  async uploadImageToCloudinary(image) {
+    // Log the image object for debugging purposes
+    console.log('Starting image upload...', image);
+    // Prepare the form data for the Cloudinary request
+    const formData = new FormData();
+    formData.append("file", {
+      uri: image.uri,                // Image URI from the picker
+      type: image.type || 'image/jpeg', // MIME type (default is 'image/jpeg')
+      name: image.fileName || 'profile-image.jpg',  // Image name (fallback if fileName is not available)
+    });
+    formData.append("upload_preset", "b1f5s93m"); // Cloudinary upload preset (make sure this is correct)
+    formData.append("cloud_name", "dofa5sctg");   // Cloudinary cloud name (replace with your cloud name)
+
     try {
-      console.log('Starting image upload...', imagee);
-
-      const form = new FormData();
-      form.append('file', imagee);
-      form.append('upload_preset', 'b1f5s93m');
-      form.append('cloud_name', 'dofa5sctg');
-
-      console.log('Uploading to Cloudinary...');
-
+      // Perform the HTTP POST request to Cloudinary
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/dofa5sctg/image/upload`,
-        form,
+        'https://api.cloudinary.com/v1_1/dofa5sctg/image/upload', // Cloudinary upload endpoint
+        formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': 'multipart/form-data', // Setting the content type for file uploads
           },
-          timeout: 30000, // 30 second timeout
-        },
+          timeout: 30000, // Optional timeout for the request (30 seconds)
+        }
       );
-
-      console.log('Upload response:', response.status, response.data);
-
+      console.log('Upload response:', response.data);
       if (response.status === 200 || response.status === 201) {
+        // Return the secure URL of the uploaded image
         console.log('Upload successful:', response.data.secure_url);
-        return response.data.secure_url;
+        return response.data.secure_url; // Return the URL to use for display or save
       } else {
-        console.log('Upload failed with status:', response.status);
+        console.error('Upload failed with status:', response.status);
         throw new Error(`Upload failed with status: ${response.status}`);
       }
     } catch (error) {
-      console.log('Upload error details:', error);
-
+      console.error('Upload error details:', error);
       if (error.code === 'ECONNABORTED') {
-        console.log('Upload timeout error');
-        throw new Error(
-          'Upload timeout. Please check your internet connection.',
-        );
+        throw new Error('Upload timeout. Please check your internet connection.');
       } else if (error.response) {
-        console.log('Server error:', error.response.data);
-        throw new Error(
-          `Upload failed: ${
-            error.response.data?.error?.message || 'Server error'
-          }`,
-        );
+        console.error('Server error:', error.response.data);
+        throw new Error(`Upload failed: ${error.response.data?.error?.message || 'Server error'}`);
       } else if (error.request) {
-        console.log('Network error:', error.request);
-        throw new Error(
-          'Network error. Please check your internet connection.',
-        );
+        console.error('Network error:', error.request);
+        throw new Error('Network error. Please check your internet connection.');
       } else {
-        console.log('Unknown error:', error.message);
+        console.error('Unknown error:', error.message);
         throw new Error(`Upload failed: ${error.message}`);
       }
     }

@@ -1,28 +1,28 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useEffect, useRef, useState} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {width} from 'react-native-dimension';
-import FastImage from 'react-native-fast-image';
-import ImageCropPicker from 'react-native-image-crop-picker';
 import AntDesign from '@react-native-vector-icons/ant-design';
-import {fontFamily} from '../../../assets';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { width } from 'react-native-dimension';
+import FastImage from 'react-native-fast-image';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { useSelector } from 'react-redux';
+import { fontFamily } from '../../../assets';
 import AuthHeader from '../../../components/authHeader';
 import Button from '../../../components/button';
 import Loader from '../../../components/loader';
 import InputField from '../../../components/textInput';
-import {appColors} from '../../../constants';
-import {addFood, updateFood} from '../../../services/food';
-import {uploadImageToCloudinary} from '../../../utills/globalFunctions';
-import {useSelector} from 'react-redux';
+import { appColors } from '../../../constants';
+import { addFood, updateFood } from '../../../services/food';
+import { uploadImageToCloudinary } from '../../../utills/globalFunctions';
 
-const AddCategoryFood = ({route}) => {
+const AddCategoryFood = ({ route }) => {
   const state = route.params;
   console.log(state, 'statestatestatestate');
   const constants = useRef(null);
 
   const [loading, setIsLoading] = useState(false);
   const navigation = useNavigation();
-  const {user} = useSelector(state => state.LoginSlice);
+  const { user } = useSelector(state => state.LoginSlice);
   const [inputVall, setInputVall] = useState({
     foodName: '',
     description: '',
@@ -40,7 +40,7 @@ const AddCategoryFood = ({route}) => {
   }, []);
 
   const handleChange = (name, value) => {
-    setInputVall(prev => ({...prev, [name]: value}));
+    setInputVall(prev => ({ ...prev, [name]: value }));
   };
 
   const handleRemoveImage = index => {
@@ -55,25 +55,32 @@ const AddCategoryFood = ({route}) => {
       alert('Maximum 4 images allowed');
       return;
     }
+
     try {
-      let image = await ImageCropPicker.openPicker({
+      // Use launchImageLibrary to open the photo picker, limit to images
+      let image = await launchImageLibrary({
         mediaType: 'photo',
-        freeStyleCropEnabled: true,
-        cropping: true,
-        width: 500,
-        height: 500,
+        selectionLimit: 1,  // Limiting to 1 image only
+        quality: 0.8,
+        includeBase64: false,
+        cropping: true,  // Optional: cropping the image
       });
-      setIsLoading(true);
-      let response = await uploadImageToCloudinary(image);
-      setIsLoading(false);
-      if (response !== 'error') {
-        setInputVall(prev => ({...prev, images: [...prev.images, response]}));
+
+      if (!image.didCancel && !image.errorCode) {
+        setIsLoading(true);
+        let response = await uploadImageToCloudinary(image);
+        setIsLoading(false);
+
+        if (response !== 'error') {
+          setInputVall(prev => ({ ...prev, images: [...prev.images, response] }));
+        }
       }
     } catch (error) {
       setIsLoading(false);
       console.log('Image Picker Error:', error);
     }
   };
+
 
   const validateFields = () => {
     return (
@@ -160,7 +167,7 @@ const AddCategoryFood = ({route}) => {
             {inputVall.images?.map((img, index) => (
               <View key={index} style={styles.imageWrapper}>
                 <FastImage
-                  source={{uri: img}}
+                  source={{ uri: img }}
                   style={styles.image}
                   resizeMode={FastImage.resizeMode.contain}
                 />
@@ -183,7 +190,7 @@ const AddCategoryFood = ({route}) => {
           handlePressBtn={handleSubmit}
           btnFontSize={12}
           btnTitle="Submit"
-          btnTextStyle={{color: appColors.white}}
+          btnTextStyle={{ color: appColors.white }}
           buttonContainer={{
             backgroundColor: appColors.primaryColor,
             borderColor: appColors.primaryColor,

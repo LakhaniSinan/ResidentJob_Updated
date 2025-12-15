@@ -1,23 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Entypo from '@react-native-vector-icons/entypo';
 import moment from 'moment';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Image,
+  Linking,
   SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
-  Linking,
-  Alert,
-  Platform,
-  PermissionsAndroid
+  View
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import { width } from 'react-native-dimension';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import Entypo from '@react-native-vector-icons/entypo';
-// import MaterialCommunityIcons from '@react-native-vector-icons/material-community';
+import { launchImageLibrary } from 'react-native-image-picker'; // Import the right package
 import { useDispatch, useSelector } from 'react-redux';
 import { appIcons, fontFamily } from '../../assets';
 import AppHeader from '../../components/appHeader';
@@ -34,13 +31,7 @@ import { setUserData } from '../../redux/slices/Login';
 import { GetCategory, GetJobTitle } from '../../services/authentication';
 import { updateDetails } from '../../services/profile';
 import { styles } from './style';
-import {
-  request,
-  check,
-  openSettings,
-  PERMISSIONS,
-  RESULTS,
-} from 'react-native-permissions';
+
 
 const genders = [{ name: 'Male' }, { name: 'Female' }, { name: 'Others' }];
 const national = [
@@ -85,54 +76,6 @@ const ProfileScreen = () => {
   const [selectedExpIndex, setSelectedExpIndex] = useState(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-
-
-  const pickImage = async () => {
-    try {
-      // ---------- ANDROID PERMISSIONS ----------
-      if (Platform.OS === "android") {
-        const androidVersion = Platform.Version;
-
-        let permission =
-          androidVersion >= 33
-            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
-            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-
-        const granted = await PermissionsAndroid.request(permission, {
-          title: "Media Permission Required",
-          message: "The app needs access to your media to select photos.",
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK",
-        });
-
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert("Permission Required", "Camera or media permission required");
-          return null;
-        }
-      }
-
-      // ---------- OPEN GALLERY ----------
-      const image = await ImageCropPicker.openPicker({
-        width: 600,
-        height: 600,
-        cropping: true,
-        compressImageQuality: 0.8,
-        mediaType: "photo",
-      });
-
-      return image;
-    } catch (error) {
-      if (error.code === "E_PERMISSION_MISSING") {
-        Alert.alert("Permission Missing", "Please enable media permission");
-        return null;
-      }
-
-      console.log("Image Picker Error:", error);
-      return null;
-    }
-  };
-
 
   const [formData, setFormData] = useState({
     // section#01
@@ -398,252 +341,56 @@ const ProfileScreen = () => {
     });
   };
 
-  // Helper function to get Android API level
-  const getAndroidAPILevel = () => {
-    if (Platform.OS !== 'android') return 0;
-
-    const release = Platform.constants.Release;
-    const versionMap = {
-      15: 35,
-      14: 34,
-      13: 33,
-      12: 32,
-      11: 30,
-      10: 29,
-      9: 28,
-      8.1: 27,
-      '8.0': 26,
-      7.1: 25,
-      '7.0': 24,
-      '6.0': 23,
-      5.1: 22,
-      '5.0': 21,
-    };
-
-    return versionMap[release] || parseInt(release);
-  };
-
-  const requestGalleryPermission = async () => {
+  const handleImagePick = async (type) => {
     try {
-      if (Platform.OS === "android") {
-        // Android 13+ uses READ_MEDIA_IMAGES
-        const androidVersion = Platform.Version;
+      setIsLoading(true)
+      const options = { mediaType: 'photo', quality: 0.8 };
+      const response = await launchImageLibrary(options);
 
-        let permission =
-          androidVersion >= 33
-            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
-            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        return;
+      }
 
-        const granted = await PermissionsAndroid.request(permission, {
-          title: "Media Permission Required",
-          message: "This app needs access to your photos to continue",
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK"
-        });
+      if (response.assets && response.assets.length > 0) {
+        const image = response.assets[0];
+        const responce = await helper.uploadImageToCloudinary(image);
+        if (responce) {
+          if (type == 'proImage') {
+            setFormData(prevData => ({
+              ...prevData,
+              image: responce,
+            }));
+          } else if (type === 'resume') {
+            setFormData(prevData => ({
+              ...prevData,
+              resumeImage: responce,
+            }));
+          } else if (type === 'supportingDoc') {
+            setFormData(prevData => ({
+              ...prevData,
+              supportingDoc: responce,
+            }));
+          } else if (type === 'educationDocument') {
+            setFormData(prevData => ({
+              ...prevData,
+              document: responce,
+            }));
+          }
 
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert("Permission Required", "Camera or media permission required");
-          return null;
+          constants.current.isVisible({
+            status: 'ok',
+            message: 'Image uploaded successfully!',
+          });
+        } else {
+          console.log('No response received from upload service');
+          Alert.alert('Error', 'Failed to upload image. No response received.');
         }
       }
-
-      // iOS does not need manual permission request, picker handles it
-      const result = await launchImageLibrary({
-        mediaType: "photo",
-        quality: 0.8,
-      });
-
-      if (result.didCancel) return null;
-      return result.assets?.[0] || null;
-
     } catch (error) {
-      console.error("Permission error:", error);
-      Alert.alert("Error", "Something went wrong while accessing media");
-      return null;
-    }
-  };
-
-  const requestCameraPermission = async () => {
-    try {
-      if (Platform.OS !== "android") return true;
-
-      // Android 13+ (API 33+)
-      if (Platform.Version >= 33) {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
-        ]);
-
-        return (
-          granted["android.permission.CAMERA"] === "granted" &&
-          granted["android.permission.READ_MEDIA_IMAGES"] === "granted"
-        );
-      }
-
-      // Android 11/12 (API 30-32)
-      if (Platform.Version >= 30) {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        ]);
-
-        return (
-          granted["android.permission.CAMERA"] === "granted" &&
-          granted["android.permission.READ_EXTERNAL_STORAGE"] === "granted"
-        );
-      }
-
-      // Android 10 and below
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-      ]);
-
-      return Object.values(granted).every(x => x === "granted");
-
-    } catch (err) {
-      console.log("Permission error:", err);
-      return false;
-    }
-  };
-
-  const handleImagePick = async type => {
-    const img = await pickImage();
-    if (!img) return;
-
-    console.log("Selected Image:", img);
-    let params = {
-      uri: img.path,
-      type: img.mime,
-      name: img.modificationDate || img.filename || "image.jpg",
-    };
-
-    console.log("Image params prepared:", params);
-
-    await uploadImageToCloudinary(type, params);
-    // try {
-    //   console.log('Image pick started for type:', type);
-
-    //   // Request correct Android permissions
-    //   const hasPermission = await requestCameraPermission();
-    //   if (!hasPermission) {
-    //     console.log('Permission denied');
-    //     Alert.alert('Permission Denied', 'Camera or media permission is required.');
-    //     return;
-    //   }
-
-    //   console.log('Opening image picker...');
-
-    //   let result;
-
-    //   // If user wants CAMERA
-    //   if (type === "camera") {
-    //     result = await ImageCropPicker.openCamera({
-    //       width: 300,
-    //       height: 400,
-    //       cropping: true,
-    //       mediaType: "photo",
-    //       includeBase64: false,
-    //       compressImageQuality: 0.8,
-    //       forceJpg: true,
-    //       writeTempFile: true,
-    //     });
-    //   }
-
-    //   // If user wants GALLERY
-    //   else {
-    //     result = await ImageCropPicker.openPicker({
-    //       width: 300,
-    //       height: 400,
-    //       cropping: true,
-    //       mediaType: "photo",
-    //       includeBase64: false,
-    //       compressImageQuality: 0.8,
-    //       forceJpg: true,
-    //       writeTempFile: true,
-    //     });
-    //   }
-
-    //   console.log("Image picker result:", result);
-
-    //   if (result && result.path) {
-    //     let params = {
-    //       uri: result.path,
-    //       type: result.mime,
-    //       name: result.modificationDate || result.filename || "image.jpg",
-    //     };
-
-    //     console.log("Image params prepared:", params);
-
-    //     await uploadImageToCloudinary(type, params);
-    //   } else {
-    //     Alert.alert("Error", "No image selected.");
-    //   }
-
-    // } catch (error) {
-    //   console.log("Image pick error:", error);
-
-    //   if (error.code === "E_PICKER_CANCELLED") {
-    //     console.log("User cancelled image picker");
-    //     return;
-    //   }
-
-    //   Alert.alert(
-    //     "Error",
-    //     "Failed to pick image. Please check your permissions and try again."
-    //   );
-    // }
-  };
-
-  const uploadImageToCloudinary = async (type, image) => {
-    try {
-      console.log('Starting upload for type:', type, 'image:', image);
-      setIsLoading(true);
-
-      const responce = await helper.ImageUploadService(image);
-      console.log('Upload successful, response:', responce);
-
-      if (responce) {
-        if (type == 'proImage') {
-          setFormData(prevData => ({
-            ...prevData,
-            image: responce,
-          }));
-        } else if (type === 'resume') {
-          setFormData(prevData => ({
-            ...prevData,
-            resumeImage: responce,
-          }));
-        } else if (type === 'supportingDoc') {
-          setFormData(prevData => ({
-            ...prevData,
-            supportingDoc: responce,
-          }));
-        } else if (type === 'educationDocument') {
-          setFormData(prevData => ({
-            ...prevData,
-            document: responce,
-          }));
-        }
-
-        constants.current.isVisible({
-          status: 'ok',
-          message: 'Image uploaded successfully!',
-        });
-      } else {
-        console.log('No response received from upload service');
-        Alert.alert('Error', 'Failed to upload image. No response received.');
-      }
-    } catch (error) {
-      console.log('Upload error in profile screen:', error);
-      Alert.alert(
-        'Upload Error',
-        error.message || 'Failed to upload image. Please try again.',
-      );
+      console.log('Image picker error:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   };
 
@@ -901,22 +648,6 @@ const ProfileScreen = () => {
     });
   };
 
-  const handleCuisineSelect = cuisine => {
-    // console.log(cuisine, 'cuisinecuisinecuisine');
-
-    // return;
-    setSelectedCuisines(prev => {
-      console.log(prev, 'prevprevprevprevprev');
-      let params = prev || '';
-
-      const updatedCuisines = params?.includes(cuisine)
-        ? params?.filter(item => item !== cuisine)
-        : [...params, cuisine];
-
-      return updatedCuisines;
-    });
-  };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
       <Loader isLoading={isLoading} />
@@ -1006,11 +737,6 @@ const ProfileScreen = () => {
                   'value.callingCode.toString()',
                 );
               }
-
-              // setFormData(prevState => ({
-              //   ...prevState,
-              //   countryCode: value.callingCode.toString(),
-              // }))
             }
           />
 
@@ -1093,29 +819,6 @@ const ProfileScreen = () => {
               }
             />
           </View>
-
-          {/* {(selectedJob === 'Chef' || selectedJob === 'Cook') && (
-            <View style={styles.expertCuisinesCard}>
-              <Text style={styles.expertCuisinesTitle}>Expert Cuisines</Text>
-              <View style={{flexDirection: 'row', flexWrap: 'wrap'}}>
-                {categories.map(item => {
-                  return (
-                    <View style={styles.cuisineRow}>
-                      <View style={styles.cuisineItem}>
-                        <CustomCheckBox
-                          checked={selectedCuisines?.includes(item?._id)}
-                          onChange={() => handleCuisineSelect(item?._id)}
-                          checkedColor={appColors.red}
-                          borderColor={appColors.red}
-                        />
-                        <Text style={styles.cuisineText}>{item.name}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )} */}
         </View>
 
         {/* Section No#03 */}
@@ -1184,18 +887,7 @@ const ProfileScreen = () => {
               }
             />
           </View>
-          {/* <View style={{marginTop: -width(3)}}>
-            <CustomPicker
-              ref={nationalRef}
-              marginVertical={width(4)}
-              labelll="National Services"
-              value={formData.nationalService}
-              listData={national}
-              handleSelectValue={(name, value) =>
-                handleChange('nationalService', value.name)
-              }
-            />
-          </View> */}
+
           <View style={{ marginTop: -width(3) }}>
             <CustomPicker
               ref={employmentStatusRef}
@@ -1430,11 +1122,7 @@ const ProfileScreen = () => {
                             justifyContent: 'center',
                             marginRight: width(2),
                           }}>
-                          {/* <MaterialCommunityIcons
-                            color={appColors.black}
-                            size={25}
-                            name="circle-edit-outline"
-                          /> */}
+
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => onDelete(index)}
@@ -1446,11 +1134,7 @@ const ProfileScreen = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}>
-                          {/* <MaterialCommunityIcons
-                            color={appColors.lightMehroon}
-                            size={25}
-                            name="delete"
-                          /> */}
+
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1688,11 +1372,7 @@ const ProfileScreen = () => {
                             justifyContent: 'center',
                             marginRight: width(2),
                           }}>
-                          {/* <MaterialCommunityIcons
-                            color={appColors.black}
-                            size={25}
-                            name="circle-edit-outline"
-                          /> */}
+
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => onExpDelete(index)}
@@ -1704,11 +1384,7 @@ const ProfileScreen = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}>
-                          {/* <MaterialCommunityIcons
-                            color={appColors.lightMehroon}
-                            size={25}
-                            name="delete"
-                          /> */}
+
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1792,9 +1468,7 @@ const ProfileScreen = () => {
               </Text>
             </View>
           </View>
-          {/* <Image
-            style={{ height: 50, width: 50 }}
-            source={{ uri: formData.resumeImage }} /> */}
+
 
           <View style={{}}>
             <Text

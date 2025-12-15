@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { width } from 'react-native-dimension';
-import ImagePicker from 'react-native-image-crop-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { appIcons, fontFamily } from '../../../assets';
 import AppHeader from '../../../components/appHeader';
@@ -22,6 +22,7 @@ import Loader from '../../../components/loader';
 import PhoneInputComponent from '../../../components/phoneInput';
 import InputField from '../../../components/textInput';
 import { appColors } from '../../../constants';
+import { helper } from '../../../helper';
 import { setUserData } from '../../../redux/slices/Login';
 import { getUserProfile } from '../../../services/authentication';
 import { updateProfile } from '../../../services/home';
@@ -82,7 +83,6 @@ const Settings = ({ route }) => {
         contact: data?.contact || 'N/A',
         hourlyRate: data?.hourlyRate?.toString() || '',
         countryCode: data?.countryCode || '',
-
         legalname: data?.legalname || '',
         neqnumber: data?.neqnumber?.toString() || '',
         personalResponsible: data?.personalResponsible || '',
@@ -94,51 +94,29 @@ const Settings = ({ route }) => {
     }
   };
 
+
   const handleImagePick = async () => {
     try {
-      const image = await ImagePicker.openPicker({
-        width: 300,
-        height: 300,
-        cropping: true,
-      });
-      uploadImageToCloudinary(image);
-    } catch (error) {
-      console.log('Image pick error:', error);
-    }
-  };
+      setIsLoading(true)
+      const options = { mediaType: 'photo', quality: 0.8 };
+      const response = await launchImageLibrary(options);
 
-  const uploadImageToCloudinary = async image => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: image.path,
-      type: image.mime,
-      name: 'profile-image.jpg',
-    });
-    formData.append('upload_preset', 'b1f5s93m');
-
-    const uploadResponse = await ImageUploadService(formData);
-    if (uploadResponse) {
-      const result = await uploadResponse.json();
-      if (result.secure_url) {
-        setProfileImage(result.secure_url);
-        console.log(result.secure_url);
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        return;
       }
-    }
-  };
 
-  const ImageUploadService = async formData => {
-    try {
-      let result = await fetch(
-        'https://api.cloudinary.com/v1_1/dofa5sctg/image/upload',
-        {
-          method: 'POST',
-          body: formData,
-        },
-      );
-      return result;
+      if (response.assets && response.assets.length > 0) {
+        const image = response.assets[0];
+        const result = await helper.uploadImageToCloudinary(image);
+        if (result) {
+          setProfileImage(result);
+        }
+      }
     } catch (error) {
-      console.error('Cloudinary upload error:', error);
-      return null;
+      console.log('Image picker error:', error);
+    } finally {
+      setIsLoading(false)
     }
   };
 

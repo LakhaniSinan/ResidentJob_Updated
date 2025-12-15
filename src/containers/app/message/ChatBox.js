@@ -1,44 +1,47 @@
-import {getDatabase, onValue, ref} from 'firebase/database';
-import React, {useCallback, useEffect, useState} from 'react';
+import FontAwesome from '@react-native-vector-icons/fontawesome';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { getDatabase, onValue, ref } from 'firebase/database';
+import moment from 'moment';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
-  Keyboard,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import {width} from 'react-native-dimension';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
-import {useSelector} from 'react-redux';
-import {appIcons, fontFamily} from '../../../assets';
+import { width } from 'react-native-dimension';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Modal from 'react-native-modal';
+import { useSelector } from 'react-redux';
+import { appIcons, fontFamily } from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import InputField from '../../../components/textInput';
-import {appColors} from '../../../constants';
-import {ReceivedMsg, senderMsg} from './SendMessage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import moment from 'moment';
-import {sendNotification} from '../../../services/notification';
+import { appColors } from '../../../constants';
+import { ReceivedMsg, senderMsg } from './SendMessage';
 
-const ChatBox = ({route}) => {
-  const {data} = route.params;
-  const {user} = useSelector(state => state.LoginSlice);
+import Loader from '../../../components/loader';
+import { helper } from '../../../helper';
+import { sendNotification } from '../../../services/notification';
+
+const ChatBox = ({ route }) => {
+  const { data } = route.params;
+  const { user } = useSelector(state => state.LoginSlice);
   const [msgValue, setMsgValue] = useState('');
   const [allMessages, setAllMessages] = useState([]);
   const [viewImage, setViewImage] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
   const [attachmentImage, setAttachmentImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({tabBarStyle: {display: 'none'}});
+    navigation.setOptions({ tabBarStyle: { display: 'none' } });
 
     return () => {
-      navigation.setOptions({tabBarStyle: {display: 'flex'}});
+      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
     };
   }, [navigation]);
 
@@ -78,53 +81,34 @@ const ChatBox = ({route}) => {
     }, [data]),
   );
 
-  const uploadImageToCloudinary = async image => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: image.path,
-      type: image.mime,
-      name: 'profile-image.jpg',
-    });
-    formData.append('upload_preset', 'b1f5s93m');
-
-    const uploadResponse = await ImageUploadService(formData);
-    if (uploadResponse) {
-      const result = await uploadResponse.json();
-      if (result.secure_url) {
-        setAttachmentImage(result.secure_url);
-        console.log(result.secure_url);
-      }
-    }
-  };
-
-  const ImageUploadService = async formData => {
-    try {
-      let result = await fetch(
-        'https://api.cloudinary.com/v1_1/dofa5sctg/image/upload',
-        {
-          method: 'POST',
-          body: formData,
-        },
-      );
-      return result;
-    } catch (error) {
-      console.error('Cloudinary upload error:', error);
-      return null;
-    }
-  };
 
   const handleImagePick = async () => {
+
     try {
-      const image = await ImageCropPicker.openPicker({
-        width: 300,
-        height: 300,
-        cropping: true,
-      });
-      uploadImageToCloudinary(image);
+      setIsLoading(true)
+      const options = { mediaType: 'photo', quality: 0.8 };
+      const response = await launchImageLibrary(options);
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        return;
+      }
+
+      if (response.assets && response.assets.length > 0) {
+        const image = response.assets[0];
+        const result = await helper.uploadImageToCloudinary(image);
+        if (result) {
+          setAttachmentImage(result);
+        }
+      }
     } catch (error) {
-      console.log('Image pick error:', error);
+      console.log('Image picker error:', error);
+    } finally {
+      setIsLoading(false)
     }
   };
+
+
+
 
   const handleSend = async () => {
     if (msgValue) {
@@ -194,7 +178,7 @@ const ChatBox = ({route}) => {
           inverted
           data={allMessages}
           keyExtractor={item => item.id}
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             let CurrentUser = item?.sendBy === user?.userDetails?._id ? true : false;
             return (
               <View
@@ -216,7 +200,7 @@ const ChatBox = ({route}) => {
                         marginHorizontal: width(3),
                       }}>
                       <Image
-                        source={{uri: item.attachmentUrl}}
+                        source={{ uri: item.attachmentUrl }}
                         style={{
                           height: '100%',
                           width: '100%',
@@ -265,8 +249,8 @@ const ChatBox = ({route}) => {
               <FontAwesome name="close" size={20} color={'white'} />
             </TouchableOpacity>
             <Image
-              source={{uri: attachmentImage}}
-              style={{width: '100%', height: '100%', borderRadius: 15}}
+              source={{ uri: attachmentImage }}
+              style={{ width: '100%', height: '100%', borderRadius: 15 }}
             />
           </View>
         )}
@@ -288,7 +272,7 @@ const ChatBox = ({route}) => {
                 startIcon={
                   <Image
                     source={appIcons.attachement}
-                    style={{height: width(7), width: width(7)}}
+                    style={{ height: width(7), width: width(7) }}
                     resizeMode="contain"
                   />
                 }
@@ -359,6 +343,7 @@ const ChatBox = ({route}) => {
           </View>
         )}
       </View>
+      <Loader isLoading={isLoading} />
       {viewImage && (
         <Modal
           isVisible={modalVisible}
@@ -366,7 +351,7 @@ const ChatBox = ({route}) => {
           // backdropOpacity={type == 'filterShops' ? 0 : 0.6}
           onBackdropPress={onClose}>
           <View style={styles.modalContainer}>
-            <TouchableOpacity onPress={onClose} style={{padding: width(5)}}>
+            <TouchableOpacity onPress={onClose} style={{ padding: width(5) }}>
               <FontAwesome name="close" size={20} color={'black'} />
             </TouchableOpacity>
             <View
@@ -376,9 +361,9 @@ const ChatBox = ({route}) => {
                 justifyContent: 'center',
               }}>
               <Image
-                source={{uri: viewImage}}
+                source={{ uri: viewImage }}
                 resizeMode="contain"
-                style={{height: width(100), width: '100%'}}
+                style={{ height: width(100), width: '100%' }}
               />
             </View>
           </View>

@@ -28,7 +28,7 @@ export function calculateTime(messageDate) {
 export const uploadImageToCloudinary = async image => {
   const formData = new FormData();
   formData.append('file', {
-    uri: image.path,
+    uri: image.uri,
     type: image.mime,
     name: 'profile-image.jpg',
   });

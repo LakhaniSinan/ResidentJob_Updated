@@ -1,3 +1,4 @@
+import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getDatabase, onValue, ref } from 'firebase/database';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -11,9 +12,8 @@ import {
   View
 } from 'react-native';
 import { width } from 'react-native-dimension';
-import ImageCropPicker from 'react-native-image-crop-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Modal from 'react-native-modal';
-import FontAwesome from '@react-native-vector-icons/fontawesome';
 import { useSelector } from 'react-redux';
 import { appIcons, appImages, fontFamily } from '../../../assets';
 import AppHeader from '../../../components/appHeader';
@@ -21,6 +21,8 @@ import Button from '../../../components/button';
 import InputField from '../../../components/textInput';
 import { appColors } from '../../../constants';
 import { ReceivedMsg, senderMsg } from './SendMessage';
+import { helper } from '../../../helper';
+import Loader from '../../../components/loader';
 
 const ChatWithAdmin = ({ route }) => {
   const data = route.params;
@@ -31,6 +33,7 @@ const ChatWithAdmin = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
   const [attachmentImage, setAttachmentImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({ tabBarStyle: { display: 'none' } });
@@ -77,51 +80,29 @@ const ChatWithAdmin = ({ route }) => {
     }, [data]),
   );
 
-  const uploadImageToCloudinary = async image => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: image.path,
-      type: image.mime,
-      name: 'profile-image.jpg',
-    });
-    formData.append('upload_preset', 'b1f5s93m');
-
-    const uploadResponse = await ImageUploadService(formData);
-    if (uploadResponse) {
-      const result = await uploadResponse.json();
-      if (result.secure_url) {
-        setAttachmentImage(result.secure_url);
-        console.log(result.secure_url);
-      }
-    }
-  };
-
-  const ImageUploadService = async formData => {
-    try {
-      let result = await fetch(
-        'https://api.cloudinary.com/v1_1/dofa5sctg/image/upload',
-        {
-          method: 'POST',
-          body: formData,
-        },
-      );
-      return result;
-    } catch (error) {
-      console.error('Cloudinary upload error:', error);
-      return null;
-    }
-  };
-
   const handleImagePick = async () => {
     try {
-      const image = await ImageCropPicker.openPicker({
-        width: 300,
-        height: 300,
-        cropping: true,
-      });
-      uploadImageToCloudinary(image);
+      setIsLoading(true)
+      const options = { mediaType: 'photo', quality: 0.8 };
+      const response = await launchImageLibrary(options);
+
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+        return;
+      }
+
+      if (response.assets && response.assets.length > 0) {
+        const image = response.assets[0];
+        const result = await helper.uploadImageToCloudinary(image);
+        if (result) {
+          setAttachmentImage(result);
+          console.log(result);
+        }
+      }
     } catch (error) {
-      console.log('Image pick error:', error);
+      console.log('Image picker error:', error);
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -181,6 +162,7 @@ const ChatWithAdmin = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Loader isLoading={isLoading} />
       <AppHeader
         height={width(25)}
         showExtraStuff={
