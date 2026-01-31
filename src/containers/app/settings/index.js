@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Entypo from '@react-native-vector-icons/entypo';
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Image,
   SafeAreaView,
@@ -11,23 +11,23 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { width } from 'react-native-dimension';
-import { launchImageLibrary } from 'react-native-image-picker';
-import { useDispatch, useSelector } from 'react-redux';
-import { appIcons, fontFamily } from '../../../assets';
+import {width} from 'react-native-dimension';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {useDispatch, useSelector} from 'react-redux';
+import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
 import PhoneInputComponent from '../../../components/phoneInput';
 import InputField from '../../../components/textInput';
-import { appColors } from '../../../constants';
-import { helper } from '../../../helper';
-import { setUserData } from '../../../redux/slices/Login';
-import { getUserProfile } from '../../../services/authentication';
-import { updateProfile } from '../../../services/home';
+import {appColors} from '../../../constants';
+import {helper} from '../../../helper';
+import {setUserData} from '../../../redux/slices/Login';
+import {getUserProfile} from '../../../services/authentication';
+import {updateProfile} from '../../../services/home';
 
-const Settings = ({ route }) => {
+const Settings = ({route}) => {
   const constants = useRef(null);
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState('');
@@ -62,7 +62,7 @@ const Settings = ({ route }) => {
   }, []);
 
   const fetchUserProfile = async () => {
-    console.log("CALLED");
+    console.log('CALLED');
 
     try {
       setIsLoading(true);
@@ -94,11 +94,10 @@ const Settings = ({ route }) => {
     }
   };
 
-
   const handleImagePick = async () => {
     try {
-      setIsLoading(true)
-      const options = { mediaType: 'photo', quality: 0.8 };
+      setIsLoading(true);
+      const options = {mediaType: 'photo', quality: 0.8};
       const response = await launchImageLibrary(options);
 
       if (response.didCancel) {
@@ -116,7 +115,7 @@ const Settings = ({ route }) => {
     } catch (error) {
       console.log('Image picker error:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
@@ -160,11 +159,11 @@ const Settings = ({ route }) => {
     updateProfile(params, inputs.userId)
       .then(response => {
         if (response.status === 201 || response.status === 200) {
-          console.log(response?.data, "response?.data?esponse?.data?");
+          console.log(response?.data, 'response?.data?esponse?.data?');
           constants.current.isVisible({
             status: 'ok',
             message: response.data.message,
-            handlePressOk: () => fetchUserProfile()
+            handlePressOk: () => fetchUserProfile(),
             //   constants.current.backdropPress();
             //   dispatch(setUserData(response?.data?.data));
             //   AsyncStorage.setItem(
@@ -206,7 +205,7 @@ const Settings = ({ route }) => {
   const cancelDeleteAccount = () => {
     setShowDeleteConfirm(false);
   };
-  const handleLogout = () => { };
+  const handleLogout = () => {};
 
   const onDeleteSuccess = () => {
     setShowDeleteSuccess(false);
@@ -217,17 +216,17 @@ const Settings = ({ route }) => {
   };
   const renderProfileContent = () => {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
+      <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
         <Loader isLoading={isLoading} />
         <AppHeader
           height={width(20)}
           heading={'Profile Screen'}
           headingColor={appColors.white}
-          leftIconStyle={{ height: 27, width: 27 }}
+          leftIconStyle={{height: 27, width: 27}}
           leftIcon={appIcons.drawerIcon}
           isDrawer={true}
         />
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{flex: 1}}>
           <View
             style={{
               alignItems: 'center',
@@ -246,7 +245,7 @@ const Settings = ({ route }) => {
               }}>
               <Image
                 source={
-                  profileImage ? { uri: profileImage } : appIcons.accountIcon
+                  profileImage ? {uri: profileImage} : appIcons.accountIcon
                 }
                 resizeMode="cover"
                 style={{
@@ -262,7 +261,7 @@ const Settings = ({ route }) => {
               </TouchableOpacity>
             </View>
           </View>
-          <View style={{ paddingHorizontal: width(4) }}>
+          <View style={{paddingHorizontal: width(4)}}>
             <Text
               style={{
                 fontFamily: fontFamily.poppinsSemiBold,
@@ -272,7 +271,7 @@ const Settings = ({ route }) => {
               }}>
               Basic Information
             </Text>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <InputField
                 inputLabel="First Name"
                 placeholder="Enter your first name"
@@ -280,7 +279,7 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('firstname', value)}
               />
             </View>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <InputField
                 inputLabel="Last Name"
                 placeholder="Enter your last name"
@@ -288,7 +287,7 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('lastname', value)}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={inputs.legalname}
                 placeholder="Legal Name"
@@ -296,14 +295,14 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('legalname', value)}
               />
             </View>
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 isEditable={false}
                 inputLabel="Email"
                 value={inputs.email}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={inputs.neqnumber ? inputs.neqnumber.toString() : ''}
                 placeholder="NEQ Number"
@@ -312,17 +311,19 @@ const Settings = ({ route }) => {
                 onChangeText={value => onChangeText('neqnumber', value)}
               />
             </View>
-            <PhoneInputComponent
-              value={inputs?.contact}
-              onChangeText={value => onChangeText('contact', value)}
-              onChangeCountryCode={value =>
-                setInputs({
-                  ...inputs,
-                  countryCode: value.callingCode.toString(),
-                })
-              }
-            />
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(3)}}>
+              <PhoneInputComponent
+                value={inputs?.contact}
+                onChangeText={value => onChangeText('contact', value)}
+                onChangeCountryCode={value =>
+                  setInputs({
+                    ...inputs,
+                    countryCode: value.callingCode.toString(),
+                  })
+                }
+              />
+            </View>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Personal Responsible'}
                 placeholderTextColor={appColors.gray}
@@ -332,7 +333,7 @@ const Settings = ({ route }) => {
                 }
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Address'}
                 placeholderTextColor={appColors.gray}
@@ -341,7 +342,7 @@ const Settings = ({ route }) => {
               />
             </View>
             {user?.loginType != 'Google' && user?.loginType != 'Apple' && (
-              <View style={{ marginTop: width(4) }}>
+              <View style={{marginTop: width(4)}}>
                 <Button
                   btnTitle={'Change Password'}
                   btnTextStyle={{
@@ -357,7 +358,7 @@ const Settings = ({ route }) => {
               </View>
             )}
 
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <Button
                 btnTitle={'Update'}
                 btnTextStyle={{
@@ -373,7 +374,7 @@ const Settings = ({ route }) => {
               />
             </View>
 
-            <View style={{ marginVertical: width(1) }}>
+            <View style={{marginVertical: width(1)}}>
               <Button
                 btnTitle={'Delete Account'}
                 btnTextStyle={{
@@ -390,7 +391,7 @@ const Settings = ({ route }) => {
               />
             </View>
           </View>
-          <View style={{ height: width(14) }} />
+          <View style={{height: width(14)}} />
         </ScrollView>
 
         {/* Delete Account Confirmation Modal */}
