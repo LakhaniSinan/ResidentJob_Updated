@@ -9,7 +9,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
 import { width } from 'react-native-dimension';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -24,9 +27,9 @@ import { ReceivedMsg, senderMsg } from './SendMessage';
 import { helper } from '../../../helper';
 import Loader from '../../../components/loader';
 
-const ChatWithAdmin = ({ route }) => {
+const ChatWithAdmin = ({route}) => {
   const data = route.params;
-  const { user } = useSelector(state => state.LoginSlice);
+  const {user} = useSelector(state => state.LoginSlice);
   const [msgValue, setMsgValue] = useState('');
   const [allMessages, setAllMessages] = useState([]);
   const [viewImage, setViewImage] = useState('');
@@ -36,9 +39,9 @@ const ChatWithAdmin = ({ route }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    navigation.setOptions({tabBarStyle: {display: 'none'}});
     return () => {
-      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
+      navigation.setOptions({tabBarStyle: {display: 'flex'}});
     };
   }, [navigation]);
 
@@ -161,254 +164,256 @@ const ChatWithAdmin = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Loader isLoading={isLoading} />
-      <AppHeader
-        height={width(25)}
-        showExtraStuff={
-          <View
-            style={{
-              height: width(20),
-              alignItems: 'center',
-              flexDirection: 'row',
-            }}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+      <SafeAreaView style={styles.container}>
+        <AppHeader
+          height={width(25)}
+          showExtraStuff={
+            <View
               style={{
-                height: width(10),
-                width: width(10),
+                height: width(20),
                 alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 100,
+                flexDirection: 'row',
               }}>
-              <Image
-                source={appIcons.goBackIcon}
-                resizeMode="contain"
-                style={{ height: '50%', width: '50%' }}
-              />
-            </TouchableOpacity>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
                 style={{
-                  height: width(12),
-                  width: width(12),
-                  borderRadius: width(100),
-                  overflow: 'hidden',
+                  height: width(10),
+                  width: width(10),
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 100,
                 }}>
                 <Image
-                  source={appImages.logo}
-                  resizeMode="cover"
-                  style={{ height: '100%', width: '100%' }}
+                  source={appIcons.goBackIcon}
+                  resizeMode="contain"
+                  style={{height: '50%', width: '50%'}}
                 />
-              </View>
-              <Text
-                style={{
-                  color: appColors.white,
-                  fontFamily: fontFamily.poppinsBold,
-                  fontSize: 16,
-                  marginLeft: width(3),
-                }}>
-                ADMIN
-              </Text>
-            </View>
-          </View>
-        }
-      />
-      <FlatList
-        inverted
-        data={allMessages}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          let CurrentUser =
-            item?.sendBy === user?.userDetails?._id ? true : false;
-          return (
-            <View
-              style={[
-                styles.messageWrapper,
-                CurrentUser ? styles.selfWrapper : styles.otherWrapper,
-              ]}>
-              <View
-                style={[
-                  styles.messageContainer,
-                  CurrentUser ? styles.selfMessage : styles.otherMessage,
-                ]}>
-                {item.attachmentUrl && (
-                  <TouchableOpacity
-                    onPress={() => handlePressImage(item.attachmentUrl)}
-                    style={{
-                      height: width(50),
-                      width: width(50),
-                      marginHorizontal: width(3),
-                    }}>
-                    <Image
-                      source={{ uri: item.attachmentUrl }}
-                      style={{
-                        height: '100%',
-                        width: '100%',
-                        borderRadius: 10,
-                      }}
-                      resizeMode="cover"
-                    />
-                  </TouchableOpacity>
-                )}
-                <Text style={styles.messageText}>{item.msg}</Text>
+              </TouchableOpacity>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View
+                  style={{
+                    height: width(12),
+                    width: width(12),
+                    borderRadius: width(100),
+                    overflow: 'hidden',
+                  }}>
+                  <Image
+                    source={appImages.logo}
+                    resizeMode="cover"
+                    style={{height: '100%', width: '100%'}}
+                  />
+                </View>
                 <Text
                   style={{
-                    fontSize: 10,
-                    color: appColors.gray,
-                    textAlign: 'right',
+                    color: appColors.white,
+                    fontFamily: fontFamily.poppinsBold,
+                    fontSize: 16,
+                    marginLeft: width(3),
                   }}>
-                  {item.time}
+                  ADMIN
                 </Text>
               </View>
             </View>
-          );
-        }}
-        contentContainerStyle={styles.messagesList}
-      />
-      {attachmentImage !== null && (
-        <View
-          style={{
-            width: width(35),
-            height: width(35),
-            marginLeft: width(5),
-            marginBottom: width(2),
-          }}>
-          <TouchableOpacity
-            onPress={() => setAttachmentImage(null)}
-            style={{
-              position: 'absolute',
-              height: width(7),
-              width: width(7),
-              zIndex: 999,
-              right: width(2),
-              top: width(2),
-              borderRadius: 100,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <FontAwesome name="close" size={20} color={'white'} />
-          </TouchableOpacity>
-          <Image
-            source={{ uri: attachmentImage }}
-            style={{ width: '100%', height: '100%', borderRadius: 15 }}
-          />
-        </View>
-      )}
-      {data?.jobStatus !== 'Completed' && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            backgroundColor: appColors.white,
-            paddingVertical: width(3),
-          }}>
+          }
+        />
+        <FlatList
+          inverted
+          data={allMessages}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => {
+            let CurrentUser =
+              item?.sendBy === user?.userDetails?._id ? true : false;
+            return (
+              <View
+                style={[
+                  styles.messageWrapper,
+                  CurrentUser ? styles.selfWrapper : styles.otherWrapper,
+                ]}>
+                <View
+                  style={[
+                    styles.messageContainer,
+                    CurrentUser ? styles.selfMessage : styles.otherMessage,
+                  ]}>
+                  {item.attachmentUrl && (
+                    <TouchableOpacity
+                      onPress={() => handlePressImage(item.attachmentUrl)}
+                      style={{
+                        height: width(50),
+                        width: width(50),
+                        marginHorizontal: width(3),
+                      }}>
+                      <Image
+                        source={{uri: item.attachmentUrl}}
+                        style={{
+                          height: '100%',
+                          width: '100%',
+                          borderRadius: 10,
+                        }}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                  )}
+                  <Text style={styles.messageText}>{item.msg}</Text>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: appColors.gray,
+                      textAlign: 'right',
+                    }}>
+                    {item.time}
+                  </Text>
+                </View>
+              </View>
+            );
+          }}
+          contentContainerStyle={styles.messagesList}
+        />
+        {attachmentImage !== null && (
           <View
             style={{
-              width: width(8),
+              width: width(35),
+              height: width(35),
+              marginLeft: width(5),
+              marginBottom: width(2),
             }}>
-            <Button
-              handlePressBtn={handleImagePick}
-              startIcon={
-                <Image
-                  source={appIcons.attachement}
-                  style={{ height: width(7), width: width(7) }}
-                  resizeMode="contain"
-                />
-              }
-              buttonContainer={{
-                backgroundColor: appColors.white,
-                paddingVertical: width(3),
-                borderRadius: width(3),
-              }}
-            />
-          </View>
-
-          <InputField
-            placeholder="Type something..."
-            placeholderTextColor="#999"
-            value={msgValue}
-            onChangeText={text => setMsgValue(text)}
-            borderRadius={width(4)}
-            borderWidth={0.00001}
-            InputContainerStyle={{
-              width: width(70),
-              backgroundColor: appColors.white,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 6,
-              },
-              shadowOpacity: 0.39,
-              shadowRadius: 8.3,
-              elevation: 13,
-            }}
-          />
-
-          <View
-            style={{
-              width: width(12),
-            }}>
-            <Button
-              startIcon={
-                <FontAwesome name="send" size={24} color={appColors.white} />
-              }
-              buttonContainer={{
-                backgroundColor: appColors.primaryColor,
-                paddingVertical: width(3),
-                borderRadius: width(3),
-              }}
-              handlePressBtn={handleSend}
-            />
-          </View>
-        </View>
-      )}
-      {data?.jobStatus == 'Completed' && (
-        <View
-          style={{
-            height: width(15),
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderTopColor: appColors.gray,
-            borderTopWidth: 1,
-          }}>
-          <Text
-            style={{
-              fontFamily: fontFamily.poppinsSemiBold,
-              color: appColors.gray,
-              textAlign: 'center',
-            }}>
-            This chat is no longer available. Start a new chat if needed.
-          </Text>
-        </View>
-      )}
-      {viewImage && (
-        <Modal
-          isVisible={modalVisible}
-          style={styles.modalStyle}
-          // backdropOpacity={type == 'filterShops' ? 0 : 0.6}
-          onBackdropPress={onClose}>
-          <View style={styles.modalContainer}>
-            <TouchableOpacity onPress={onClose} style={{ padding: width(5) }}>
-              <FontAwesome name="close" size={20} color={'black'} />
-            </TouchableOpacity>
-            <View
+            <TouchableOpacity
+              onPress={() => setAttachmentImage(null)}
               style={{
-                flex: 1,
+                position: 'absolute',
+                height: width(7),
+                width: width(7),
+                zIndex: 999,
+                right: width(2),
+                top: width(2),
+                borderRadius: 100,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-              <Image
-                source={{ uri: viewImage }}
-                resizeMode="contain"
-                style={{ height: width(100), width: '100%' }}
-              />
+              <FontAwesome name="close" size={20} color={'white'} />
+            </TouchableOpacity>
+            <Image
+              source={{uri: attachmentImage}}
+              style={{width: '100%', height: '100%', borderRadius: 15}}
+            />
+          </View>
+        )}
+        {data?.jobStatus !== 'Completed' && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              backgroundColor: appColors.white,
+              paddingVertical: width(3),
+            }}>
+            <View
+              style={{
+                width: width(12),
+              }}>
+              <TouchableOpacity
+                onPress={handleImagePick}
+                style={{
+                  backgroundColor: appColors.spnishGray,
+                  alignItems: 'center',
+                  padding: width(3),
+                  borderRadius: width(3),
+                }}>
+                <Image
+                  source={appIcons.attachement}
+                  style={{height: width(7), width: width(7)}}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <InputField
+              placeholder="Type something..."
+              placeholderTextColor="#999"
+              value={msgValue}
+              onChangeText={text => setMsgValue(text)}
+              borderRadius={width(4)}
+              borderWidth={0.00001}
+              InputContainerStyle={{
+                width: width(70),
+                backgroundColor: appColors.spnishGray,
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 6,
+                },
+                shadowOpacity: 0.39,
+                shadowRadius: 8.3,
+                elevation: 13,
+              }}
+            />
+
+            <View
+              style={{
+                width: width(12),
+              }}>
+              <TouchableOpacity
+                onPress={handleSend}
+                style={{
+                  backgroundColor: appColors.primaryColor,
+                  alignItems: 'center',
+                  padding: width(3),
+                  borderRadius: width(3),
+                }}>
+                <FontAwesome name="send" size={24} color={appColors.white} />
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      )}
-    </SafeAreaView>
+        )}
+        {data?.jobStatus == 'Completed' && (
+          <View
+            style={{
+              height: width(15),
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderTopColor: appColors.gray,
+              borderTopWidth: 1,
+            }}>
+            <Text
+              style={{
+                fontFamily: fontFamily.poppinsSemiBold,
+                color: appColors.gray,
+                textAlign: 'center',
+              }}>
+              This chat is no longer available. Start a new chat if needed.
+            </Text>
+          </View>
+        )}
+        {viewImage && (
+          <Modal
+            isVisible={modalVisible}
+            style={styles.modalStyle}
+            // backdropOpacity={type == 'filterShops' ? 0 : 0.6}
+            onBackdropPress={onClose}>
+            <View style={styles.modalContainer}>
+              <TouchableOpacity onPress={onClose} style={{padding: width(5)}}>
+                <FontAwesome name="close" size={20} color={'black'} />
+              </TouchableOpacity>
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <Image
+                  source={{uri: viewImage}}
+                  resizeMode="contain"
+                  style={{height: width(100), width: '100%'}}
+                />
+              </View>
+            </View>
+          </Modal>
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

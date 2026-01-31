@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import moment from 'moment';
 import React, {useEffect, useRef, useState} from 'react';
 import {FlatList, SafeAreaView, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
@@ -6,10 +6,9 @@ import {useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
+import CommonAlert from '../../../components/commanAlert';
 import {appColors} from '../../../constants';
 import {acceptJob, findJobsByDate} from '../../../services/findjobHome';
-import CommonAlert from '../../../components/commanAlert';
-import moment from 'moment';
 import {updateJobByAdmin} from '../../../services/wallet';
 
 const JobsByDate = ({route}) => {
@@ -75,6 +74,8 @@ const JobsByDate = ({route}) => {
           }
         } catch (error) {
           console.log(error, 'errorerrorerrorerror2344557687');
+          setIsRefreshing(false);
+        } finally {
           setIsRefreshing(false);
         }
       },
