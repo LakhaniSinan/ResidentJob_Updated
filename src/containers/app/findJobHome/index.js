@@ -6,6 +6,7 @@ import {Calendar} from 'react-native-calendars';
 import {width} from 'react-native-dimension';
 import {useSelector} from 'react-redux';
 
+import moment from 'moment';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Loader from '../../../components/loader';
@@ -13,7 +14,6 @@ import {appColors} from '../../../constants';
 import {helper} from '../../../helper';
 import {getCalenderJobsByWorker} from '../../../services/createJob';
 import {fetchAvailbleJob} from '../../../services/findjobHome';
-import moment from 'moment';
 
 const FindJobHome = () => {
   const navigation = useNavigation();
@@ -59,13 +59,6 @@ const FindJobHome = () => {
   const handleNotification = useCallback(
     remoteMessage => {
       const type = remoteMessage?.data?.type;
-      if (!type) return;
-
-      if (type === 'Favourite') {
-        navigation.navigate('MyFavourites');
-      } else if (type === 'Matches') {
-        navigation.navigate('Matches');
-      }
     },
     [navigation],
   );
