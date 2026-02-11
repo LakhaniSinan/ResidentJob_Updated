@@ -1,62 +1,124 @@
 import {CommonActions, useNavigation} from '@react-navigation/native';
-import React, {useRef, useState} from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {width} from 'react-native-dimension';
-import {AirbnbRating} from 'react-native-ratings';
+import {useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
+import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
 import InputField from '../../../components/textInput';
 import {appColors} from '../../../constants';
+import {getAssingedWorkers} from '../../../services/createJob';
 import {createReveiw} from '../../../services/reviews';
-import {useSelector} from 'react-redux';
-import CommonAlert from '../../../components/commanAlert';
 
 const RateUsScreen = ({route}) => {
-  const state = route.params;
+  const jobData = route.params;
   const constants = useRef(null);
   const {user} = useSelector(state => state.LoginSlice);
   const [review, setReview] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [ratings, setRatings] = useState(0);
-  const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
+  const [workers, setWorkers] = useState([]);
+  const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(null);
+  const [reviewedWorkers, setReviewedWorkers] = useState([]);
   const navigation = useNavigation();
+  const selectedWorker =
+    selectedWorkerIndex !== null ? workers[selectedWorkerIndex] : null;
+
+  useEffect(() => {
+    handleGetAssingedWorkers();
+  }, []);
+
+  const handleGetAssingedWorkers = async () => {
+    try {
+      let params = {
+        jobId: jobData?._id,
+      };
+      setIsLoading(true);
+      const response = await getAssingedWorkers(params);
+      let data = response?.data?.workers;
+
+      if (response?.status === 200 || response?.status === 201) {
+        setWorkers(data);
+      }
+    } catch (error) {
+      console.log('🚀 ~ handleGetAssingedWorkers ~ error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleReviewSubmit = async () => {
-    if (review.trim() === '') {
+    if (ratings === 0) {
       constants.current.isVisible({
         status: 'error',
-        message: 'Please write a review before submiting.',
+        message: 'Please select a rating.',
         handlePressOk: () => constants.current.backdropPress(),
       });
       return;
     }
+
+    if (review.trim() === '') {
+      constants.current.isVisible({
+        status: 'error',
+        message: 'Please write a review before submitting.',
+        handlePressOk: () => constants.current.backdropPress(),
+      });
+      return;
+    }
+
     try {
       let payload = {
-        jobId: state?._id,
-        providerId: state?.assignedWorkers[0]?.jobSeekerId,
+        jobId: jobData?._id,
+        providerId: selectedWorker?.jobSeekerId?._id,
         customerId: user?.userDetails?._id,
         rating: ratings,
         reviewText: review,
       };
 
-      console.log(payload, 'payloadpayloadpayload');
-
-      return;
       setIsLoading(true);
       const response = await createReveiw(payload);
       setIsLoading(false);
-      setIsReviewSubmitted(true);
+
+      const updatedWorkers = workers.filter(
+        (_, index) => index !== selectedWorkerIndex,
+      );
+      setWorkers(updatedWorkers);
+
+      setReviewedWorkers([
+        ...reviewedWorkers,
+        selectedWorker?.jobSeekerId?._id,
+      ]);
+
       setReview('');
+      setRatings(0);
+      setSelectedWorkerIndex(null);
+
       constants.current.isVisible({
         status: 'ok',
-        message: 'Thank you for your review! Your feedback means a lot to us.',
-        handlePressOk: () => {
-          constants.current.backdropPress();
-          navigation.goBack();
-        },
+        message: 'Thank you for your review! 💙',
+        handlePressOk: () => constants.current.backdropPress(),
       });
+
+      if (updatedWorkers.length === 0) {
+        setTimeout(() => {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{name: 'OnGoingHistoryStack'}],
+            }),
+          );
+        }, 500);
+      }
     } catch (error) {
       setIsLoading(false);
       console.log('🚀 ~ handleReviewSubmit ~ error:', error);
@@ -72,40 +134,109 @@ const RateUsScreen = ({route}) => {
         leftIconStyle={{height: 27, width: 27}}
         leftIcon={appIcons.goBackIcon}
       />
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        <View style={styles.ratingContainer}>
-          <AirbnbRating
-            showRating={false}
-            size={40}
-            defaultRating={0}
-            onFinishRating={count => setRatings(count)}
-          />
-        </View>
 
-        <Text style={styles.headerText}>Write A Review</Text>
+      {workers.length > 0 ? (
+        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+          <Text style={styles.headerText}>Rate Our Workers</Text>
+          <Text style={styles.subHeaderText}>
+            {workers.length} worker(s) to review
+          </Text>
 
-        <View style={styles.inputContainer}>
-          <InputField
-            placeholder="Write a review"
-            placeholderTextColor={appColors.gray}
-            multiline={true}
-            borderRadius={width(6)}
-            value={review}
-            onChangeText={text => setReview(text)}
-          />
-        </View>
+          {workers.map((worker, index) => (
+            <View key={worker?.jobSeekerId?._id}>
+              {/* Worker Card */}
+              <TouchableOpacity
+                onPress={() =>
+                  setSelectedWorkerIndex(
+                    selectedWorkerIndex === index ? null : index,
+                  )
+                }
+                style={[
+                  styles.workerCard,
+                  selectedWorkerIndex === index && styles.workerCardSelected,
+                ]}>
+                <Image
+                  source={{uri: worker?.image}}
+                  style={styles.workerImage}
+                />
+                <View style={styles.workerInfo}>
+                  <Text style={styles.workerName}>
+                    {worker?.jobSeekerId?.firstname}{' '}
+                    {worker?.jobSeekerId?.lastname}
+                  </Text>
+                  <Text style={styles.workerTitle}>{worker?.jobTitle}</Text>
+                </View>
+                <Text style={styles.expandIcon}>
+                  {selectedWorkerIndex === index ? '▼' : '▶'}
+                </Text>
+              </TouchableOpacity>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            handlePressBtn={handleReviewSubmit}
-            btnFontSize={12}
-            btnTitle={'Submit'}
-            btnTextStyle={styles.buttonText}
-            buttonContainer={styles.submitButton}
-          />
-        </View>
+              {/* Expanded Review Form */}
+              {selectedWorkerIndex === index && (
+                <View style={styles.expandedContainer}>
+                  {/* Rating Section */}
+                  <View style={styles.ratingContainer}>
+                    <Text style={styles.ratingLabel}>Select Rating:</Text>
+                    <StarRating rating={ratings} setRating={setRatings} />
+                  </View>
 
-        <View style={styles.buttonContainer}>
+                  {/* Review Input */}
+                  <Text style={styles.reviewLabel}>Write A Review</Text>
+                  <View style={styles.inputContainer}>
+                    <InputField
+                      placeholder="Share your experience with this worker"
+                      placeholderTextColor={appColors.gray}
+                      multiline={true}
+                      borderRadius={width(6)}
+                      value={review}
+                      onChangeText={text => setReview(text)}
+                    />
+                  </View>
+
+                  {/* Action Buttons */}
+                  <View style={styles.actionButtonsContainer}>
+                    <TouchableOpacity
+                      onPress={handleReviewSubmit}
+                      style={styles.submitBtn}>
+                      <Text style={styles.submitBtnText}>Submit Review</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setReview('');
+                        setRatings(0);
+                        setSelectedWorkerIndex(null);
+                      }}
+                      style={styles.cancelBtn}>
+                      <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
+
+          <View style={styles.continueButtonContainer}>
+            <Button
+              handlePressBtn={() =>
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{name: 'OnGoingHistoryStack'}],
+                  }),
+                )
+              }
+              btnFontSize={12}
+              btnTitle={'Continue without Review'}
+              btnTextStyle={styles.buttonText}
+              buttonContainer={styles.submitButton}
+            />
+          </View>
+
+          <View style={styles.bottomSpace} />
+        </ScrollView>
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>All workers reviewed!</Text>
           <Button
             handlePressBtn={() =>
               navigation.dispatch(
@@ -116,12 +247,13 @@ const RateUsScreen = ({route}) => {
               )
             }
             btnFontSize={12}
-            btnTitle={'Continue with out rating'}
+            btnTitle={'Go to History'}
             btnTextStyle={styles.buttonText}
             buttonContainer={styles.submitButton}
           />
         </View>
-      </ScrollView>
+      )}
+
       <CommonAlert ref={constants} />
       <Loader isLoading={isLoading} />
     </View>
@@ -130,6 +262,25 @@ const RateUsScreen = ({route}) => {
 
 export default RateUsScreen;
 
+const StarRating = ({rating, setRating}) => {
+  return (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map(item => (
+        <TouchableOpacity
+          key={item}
+          style={{marginLeft: 5}}
+          onPress={() => setRating(item)}
+          activeOpacity={0.7}>
+          <Image
+            source={item <= rating ? appIcons.starFilled : appIcons.starOutline}
+            style={styles.starIcon}
+          />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   headerText: {
     fontFamily: fontFamily.poppinsBold,
@@ -137,44 +288,147 @@ const styles = StyleSheet.create({
     padding: width(3),
     color: appColors.black,
   },
-  ratingContainer: {
-    height: width(30),
-    backgroundColor: appColors.lightBlue,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: width(3),
+  subHeaderText: {
+    fontFamily: fontFamily.poppinsRegular,
+    fontSize: 14,
+    paddingHorizontal: width(3),
+    color: appColors.gray,
+    marginBottom: width(2),
   },
-  inputContainer: {
+  reviewLabel: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 14,
+    paddingHorizontal: width(3),
+    paddingTop: width(3),
+    color: appColors.black,
+  },
+  ratingLabel: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 14,
+    color: appColors.black,
+    marginBottom: width(2),
+  },
+  workerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: appColors.lightBlue,
+    margin: width(3),
+    borderRadius: 15,
     padding: width(3),
   },
-  buttonContainer: {
-    paddingHorizontal: width(3),
-    justifyContent: 'center',
-    height: width(14),
-    marginVertical: width(2),
+  workerCardSelected: {
+    backgroundColor: '#E8D4F8',
+    borderWidth: 2,
+    borderColor: '#792DBD',
   },
-  buttonText: {
+  workerImage: {
+    width: width(18),
+    height: width(18),
+    borderRadius: 50,
+    marginRight: width(3),
+  },
+  workerInfo: {
+    flex: 1,
+  },
+  workerName: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 15,
+    color: appColors.black,
+  },
+  workerTitle: {
+    fontFamily: fontFamily.poppinsRegular,
+    fontSize: 12,
+    color: appColors.gray,
+    marginTop: width(1),
+  },
+  expandIcon: {
+    fontSize: 18,
+    color: '#792DBD',
+    fontWeight: 'bold',
+  },
+  expandedContainer: {
+    backgroundColor: '#F9F9F9',
+    marginHorizontal: width(3),
+    marginBottom: width(3),
+    borderRadius: 12,
+    paddingHorizontal: width(3),
+    paddingBottom: width(3),
+  },
+  ratingContainer: {
+    paddingVertical: width(3),
+    alignItems: 'center',
+  },
+  starRow: {
+    flexDirection: 'row',
+  },
+  starIcon: {
+    width: width(8),
+    height: width(8),
+    marginHorizontal: width(2),
+    resizeMode: 'contain',
+  },
+  inputContainer: {
+    paddingVertical: width(2),
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    gap: width(2),
+    marginTop: width(3),
+  },
+  submitBtn: {
+    flex: 1,
+    backgroundColor: '#792DBD',
+    paddingVertical: width(3),
+    borderRadius: width(100),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitBtnText: {
     color: appColors.white,
     fontFamily: fontFamily.poppinsBold,
+    fontSize: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: appColors.gray,
+    paddingVertical: width(3),
+    borderRadius: width(100),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: appColors.white,
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: width(5),
+  },
+  emptyText: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 18,
+    color: appColors.black,
+    marginBottom: width(5),
   },
   submitButton: {
     backgroundColor: appColors.lightMehroon,
     borderRadius: width(100),
     borderWidth: 1,
     borderColor: appColors.gray,
-    marginTop: width(3),
     paddingVertical: width(3),
   },
-  appreciationMessage: {
-    padding: width(3),
-    marginTop: width(5),
-    alignItems: 'center',
-  },
-  appreciationText: {
+  buttonText: {
+    color: appColors.white,
     fontFamily: fontFamily.poppinsBold,
-    fontSize: 16,
-    color: appColors.black,
-    textAlign: 'center',
+  },
+  bottomSpace: {
+    height: width(10),
+  },
+  continueButtonContainer: {
+    paddingHorizontal: width(3),
+    paddingVertical: width(3),
   },
 });

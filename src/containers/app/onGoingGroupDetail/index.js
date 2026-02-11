@@ -399,10 +399,12 @@ const OnGoingGroupDetail = ({route}) => {
                 modalRef.current.backdropPress();
                 // navigation.navigate('RateUsScreen', item);
                 // navigation.navigate('RateUsScreen', item);
-                navigation.reset({
-                  index: 0,
-                  routes: [{name: 'OnGoingHistoryStack'}],
-                });
+                // navigation.reset({
+                //   index: 0,
+                //   routes: [{name: 'OnGoingHistoryStack'}],
+                // });
+
+                navigation.navigate('RateUsScreen', item);
               },
             });
           } else {

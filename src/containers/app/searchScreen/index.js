@@ -162,12 +162,22 @@ const SearchScreen = ({route}) => {
   };
 
   const handleJobTitleSelection = index => {
-    setJobTitles(prev =>
-      prev.map((job, i) =>
-        i === index ? {...job, isSelected: !job.isSelected} : job,
-      ),
-    );
+    setJobTitles(prev => {
+      const updatedList = [...prev];
+      const selectedItem = {...updatedList[index]};
+
+      selectedItem.isSelected = !selectedItem.isSelected;
+
+      updatedList.splice(index, 1);
+
+      if (selectedItem.isSelected) {
+        return [selectedItem, ...updatedList];
+      } else {
+        return [...updatedList, selectedItem];
+      }
+    });
   };
+
   const handleChangeJobField = (index, field, value) => {
     setJobTitles(prev =>
       prev.map((job, i) => {

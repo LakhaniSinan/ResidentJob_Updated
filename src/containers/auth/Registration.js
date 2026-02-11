@@ -143,7 +143,7 @@ const Registration = ({ route }) => {
       <CommonAlert ref={constants} />
       <AppHeader
         height={width(20)}
-        heading={`Register As ${state == 'hire' ? 'Customer' : 'Worker'}`}
+        heading={`Register As ${state == 'hire' ? 'Resident' : 'Worker'}`}
         headingColor={appColors.white}
         leftIconStyle={{ height: 27, width: 27 }}
         leftIcon={appIcons.goBackIcon}

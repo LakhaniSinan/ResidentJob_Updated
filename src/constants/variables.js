@@ -72,6 +72,7 @@ export const endPoints = {
   cancelJob: '/admin/group-jobs/cancel',
   updatedJob: '/update/group-job',
   updateJobForAdmin: '/admin/update-job',
+  getAssingedWorkers: '/admin/group-job/assigned-workers',
 
   //Payment Card
   saveCard: '/card/save',

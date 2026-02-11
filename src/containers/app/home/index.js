@@ -1,10 +1,16 @@
 import messaging from '@react-native-firebase/messaging';
 import {useNavigation} from '@react-navigation/native';
 import React, {useEffect, useRef, useState} from 'react';
-import {FlatList, Image, SafeAreaView, Text, View} from 'react-native';
+import {
+  FlatList,
+  SafeAreaView,
+  Text,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import {width} from 'react-native-dimension';
 import {useDispatch, useSelector} from 'react-redux';
-import {appIcons, appImages, fontFamily} from '../../../assets';
+import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
 import CategoryCard from '../../../components/categoryCard';
 import Loader from '../../../components/loader';
@@ -30,24 +36,13 @@ const Home = () => {
 
   const handleFetchHomeData = async (isRefresh = false) => {
     try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
+      if (isRefresh) setRefreshing(true);
+      else setIsLoading(true);
 
       const response = await fetchHomeData();
-      console.log(response, 'responseresponse');
 
       if (response.status == 200 || response.status == 201) {
-        let data = response?.data.occupations;
-        // console.log(data, 'datadatadata');
-        setHomeData(data);
-      } else {
-        // modalRef.current.isVisible({
-        //   status: 'error',
-        //   message: response.data.message,
-        // });
+        setHomeData(response?.data.occupations);
       }
     } catch (error) {
       console.log('🚀 ~ handleFetchHomeData ~ error:', error);
@@ -71,6 +66,7 @@ const Home = () => {
   const renderTopService = ({item, index}) => {
     return <TopServicesCard type={'home'} item={item} index={index} />;
   };
+
   const handleClickCategory = item => {
     const jobsArray = Array.isArray(item) ? item : [item];
 
@@ -82,13 +78,6 @@ const Home = () => {
 
   const handleNotification = remoteMessage => {
     return;
-    if (remoteMessage.data.type == 'Favourite') {
-      navigation.navigate('MyFavourites');
-      dispatch(handleGetFavourites(user?.userDetails?._id));
-    } else if (remoteMessage.data.type == 'Matches') {
-      navigation.navigate('Matches');
-      dispatch(handleGetMatches(user?.userDetails?._id));
-    }
   };
 
   useEffect(() => {
@@ -96,9 +85,6 @@ const Home = () => {
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) handleNotification(remoteMessage);
-      })
-      .catch(err => {
-        console.log(err, 'ERRR');
       });
 
     const unsubscribeOpened = messaging().onNotificationOpenedApp(
@@ -109,7 +95,6 @@ const Home = () => {
 
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
       await dispatch(handleGetAllNotification(user?.userDetails?._id));
-      console.log(remoteMessage, 'remoteMessageremoteMessage$@#$#$#$#');
 
       const {title, body} = remoteMessage?.notification || {};
       const safeTitle = title || remoteMessage?.data?.title || 'Notification';
@@ -130,6 +115,7 @@ const Home = () => {
   return (
     <>
       <Loader isLoading={isLoading} />
+
       <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
         <AppHeader
           isDrawer
@@ -160,6 +146,34 @@ const Home = () => {
           refreshing={refreshing}
           onRefresh={() => handleFetchHomeData(true)}
         />
+
+        {/* Floating Create Job Button */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('SearchStack')}
+          style={{
+            position: 'absolute',
+            bottom: width(5),
+            right: width(5),
+            backgroundColor: appColors.primaryColor,
+            paddingHorizontal: width(5),
+            paddingVertical: width(2),
+            borderRadius: width(10),
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 3},
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+          }}>
+          <Text
+            style={{
+              color: appColors.white,
+              fontFamily: fontFamily.poppinsSemiBold,
+            }}>
+            Create Job
+          </Text>
+        </TouchableOpacity>
+
         <CommonAlert ref={modalRef} />
       </SafeAreaView>
     </>

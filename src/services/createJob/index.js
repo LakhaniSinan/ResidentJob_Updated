@@ -35,6 +35,9 @@ export const createJobForAdmin = params => {
 export const updateJobForAdmin = params => {
   return Api(endPoints.updateJobForAdmin, params, requestType.PUT);
 };
+export const getAssingedWorkers = params => {
+  return Api(endPoints.getAssingedWorkers, params, requestType.POST);
+};
 
 export const fetchProviderJob = (id, params) => {
   return Api(`${endPoints.fetchProviderJob}/${id}`, params, requestType.POST);

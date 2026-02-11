@@ -76,7 +76,7 @@ const WelcomeScreens = () => {
                 fontFamily: fontFamily.poppinsBold,
                 color: appColors.black,
               }}>
-              Customer
+              Resident
             </Text>
           </TouchableOpacity>
 

@@ -24,7 +24,7 @@ export const appImages = {
   appIcon: require('../assets/images/appIcon.jpeg'),
   stripeImg: require('../assets/images/stripeImg.png'),
   logo: require('../assets/images/logo.jpeg'),
-  newImage:require("../assets/images/new_image.png")
+  newImage: require('../assets/images/new_image.png'),
 };
 export const appIcons = {
   coinsIcon: require('../assets/icons/coinsIcon.png'),
@@ -59,6 +59,8 @@ export const appIcons = {
   alertIcon: require('../assets/icons/alertIcon.png'),
   binIcon: require('../assets/icons/binIcon.png'),
   maintainence: require('../assets/icons/maintainence.png'),
+  starFilled: require('../assets/icons/starFilled.png'),
+  starOutline: require('../assets/icons/starOutline.png'),
 };
 
 export const fontFamily = {

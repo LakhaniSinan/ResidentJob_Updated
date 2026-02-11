@@ -101,7 +101,7 @@ const ChefProfiles = ({route}) => {
                   fontFamily: fontFamily.poppinsBold,
                   color: appColors.black,
                 }}>
-                {user?.userDetails?.role == 'jobSeeker' ? 'Provider' : 'Customer'}
+                {user?.userDetails?.role == 'jobSeeker' ? 'Provider' : 'Resident'}
               </Text>
               <Text
                 style={{

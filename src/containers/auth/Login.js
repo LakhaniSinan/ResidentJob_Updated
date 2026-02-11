@@ -425,7 +425,7 @@ const Login = ({ route }) => {
       <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
         <AppHeader
           height={width(20)}
-          heading={`Login As ${type == 'hire' ? 'Customer' : 'Worker'}`}
+          heading={`Login As ${type == 'hire' ? 'Resident' : 'Worker'}`}
           headingColor={appColors.white}
           leftIconStyle={{ height: 27, width: 27 }}
           leftIcon={appIcons.goBackIcon}

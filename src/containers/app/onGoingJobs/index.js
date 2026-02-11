@@ -20,6 +20,8 @@ const OnGoingHistory = ({route}) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const {user} = useSelector(state => state.LoginSlice);
 
+  console.log(filteredData, 'filteredDatafilteredDatafilteredDatafilteredData');
+
   useFocusEffect(
     useCallback(() => {
       fetchJobData();
