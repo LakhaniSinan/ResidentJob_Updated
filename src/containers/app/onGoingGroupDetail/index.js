@@ -761,25 +761,57 @@ const OnGoingGroupDetail = ({route}) => {
                 />
               </>
             )}
-
-          {item?.paymentStatus == 'Paid' && (
-            <Button
-              handlePressBtn={handleGeneratePDF}
-              btnFontSize={12}
-              btnTitle={'Download Invoice'}
-              btnTextStyle={{
-                color: appColors.white,
-              }}
-              buttonContainer={{
-                backgroundColor: appColors.primaryColor,
-                borderColor: appColors.primaryColor,
-                borderWidth: 1,
-                borderRadius: 12,
-                marginTop: width(4),
-                paddingVertical: width(3),
-              }}
-            />
-          )}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: width(4),
+            }}>
+            {item?.paymentStatus == 'Paid' && (
+              <View
+                style={{
+                  width: item.jobStatus == 'Completed' ? '48%' : '100%',
+                }}>
+                <Button
+                  handlePressBtn={handleGeneratePDF}
+                  btnFontSize={12}
+                  btnTitle={'Download Invoice'}
+                  btnTextStyle={{
+                    color: appColors.white,
+                  }}
+                  buttonContainer={{
+                    backgroundColor: appColors.primaryColor,
+                    borderColor: appColors.primaryColor,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingVertical: width(3),
+                  }}
+                />
+              </View>
+            )}
+            {item.jobStatus == 'Completed' && (
+              <View style={{width: '48%'}}>
+                <Button
+                  handlePressBtn={() => {
+                    navigation.navigate('RateUsScreen', item);
+                  }}
+                  btnFontSize={12}
+                  btnTitle={item?.isReviewed ? 'Review Given' : 'Give Review'}
+                  btnTextStyle={{
+                    color: appColors.white,
+                  }}
+                  buttonContainer={{
+                    backgroundColor: appColors.primaryColor,
+                    borderColor: appColors.primaryColor,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingVertical: width(3),
+                  }}
+                />
+              </View>
+            )}
+          </View>
           {item?.paymentStatus == 'Paid' && item.jobStatus !== 'Completed' && (
             <Button
               handlePressBtn={handleCompleteAppointment}

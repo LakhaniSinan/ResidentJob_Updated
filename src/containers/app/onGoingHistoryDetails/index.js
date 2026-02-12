@@ -432,6 +432,37 @@ const OnGoingHistoryDetails = ({route}) => {
             </View>
           </View>
         )}
+        {jobStatus == 'Completed' && (
+          <View
+            style={{
+              marginHorizontal: width(2),
+            }}>
+            {workerDetails && (
+              <Button
+                handlePressBtn={() => {
+                  navigation.navigate('WorkerReviewsScreen', {
+                    workerId:
+                      workerDetails?._id || workerDetails?.jobSeekerId?._id,
+                    jobId: _id,
+                  });
+                }}
+                btnFontSize={12}
+                btnTitle={'View Worker Reviews'}
+                btnTextStyle={{
+                  color: appColors.white,
+                }}
+                buttonContainer={{
+                  backgroundColor: appColors.primaryColor,
+                  borderColor: appColors.primaryColor,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  paddingVertical: width(3),
+                  marginVertical: width(2),
+                }}
+              />
+            )}
+          </View>
+        )}
       </ScrollView>
       <CommonAlert ref={modalRef} />
       <Loader isLoading={isLoading} />

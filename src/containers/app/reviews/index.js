@@ -24,12 +24,13 @@ const RateUsScreen = ({route}) => {
   const jobData = route.params;
   const constants = useRef(null);
   const {user} = useSelector(state => state.LoginSlice);
+
   const [review, setReview] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [ratings, setRatings] = useState(0);
   const [workers, setWorkers] = useState([]);
   const [selectedWorkerIndex, setSelectedWorkerIndex] = useState(null);
-  const [reviewedWorkers, setReviewedWorkers] = useState([]);
+
   const navigation = useNavigation();
   const selectedWorker =
     selectedWorkerIndex !== null ? workers[selectedWorkerIndex] : null;
@@ -40,15 +41,11 @@ const RateUsScreen = ({route}) => {
 
   const handleGetAssingedWorkers = async () => {
     try {
-      let params = {
-        jobId: jobData?._id,
-      };
       setIsLoading(true);
-      const response = await getAssingedWorkers(params);
-      let data = response?.data?.workers;
+      const response = await getAssingedWorkers({jobId: jobData?._id});
 
       if (response?.status === 200 || response?.status === 201) {
-        setWorkers(data);
+        setWorkers(response?.data?.workers || []);
       }
     } catch (error) {
       console.log('🚀 ~ handleGetAssingedWorkers ~ error:', error);
@@ -57,29 +54,48 @@ const RateUsScreen = ({route}) => {
     }
   };
 
+  const handleOpenWorker = index => {
+    if (selectedWorkerIndex === index) {
+      setSelectedWorkerIndex(null);
+      setReview('');
+      setRatings(0);
+      return;
+    }
+
+    const worker = workers[index];
+
+    if (worker?.isReviewed) {
+      setReview(worker?.review?.reviewText || '');
+      setRatings(worker?.review?.rating || 0);
+    } else {
+      setReview('');
+      setRatings(0);
+    }
+
+    setSelectedWorkerIndex(index);
+  };
+
   const handleReviewSubmit = async () => {
     if (ratings === 0) {
-      constants.current.isVisible({
+      return constants.current.isVisible({
         status: 'error',
         message: 'Please select a rating.',
         handlePressOk: () => constants.current.backdropPress(),
       });
-      return;
     }
 
     if (review.trim() === '') {
-      constants.current.isVisible({
+      return constants.current.isVisible({
         status: 'error',
         message: 'Please write a review before submitting.',
         handlePressOk: () => constants.current.backdropPress(),
       });
-      return;
     }
 
     try {
-      let payload = {
+      const payload = {
         jobId: jobData?._id,
-        providerId: selectedWorker?.jobSeekerId?._id,
+        workerId: selectedWorker?.jobSeekerId?._id,
         customerId: user?.userDetails?._id,
         rating: ratings,
         reviewText: review,
@@ -89,35 +105,31 @@ const RateUsScreen = ({route}) => {
       const response = await createReveiw(payload);
       setIsLoading(false);
 
-      const updatedWorkers = workers.filter(
-        (_, index) => index !== selectedWorkerIndex,
-      );
-      setWorkers(updatedWorkers);
+      if (response?.status === 200 || response?.status === 201) {
+        const updatedWorkers = workers.map((w, index) => {
+          if (index === selectedWorkerIndex) {
+            return {
+              ...w,
+              isReviewed: true,
+              review: {
+                rating: ratings,
+                reviewText: review,
+              },
+            };
+          }
+          return w;
+        });
 
-      setReviewedWorkers([
-        ...reviewedWorkers,
-        selectedWorker?.jobSeekerId?._id,
-      ]);
+        setWorkers(updatedWorkers);
+        setSelectedWorkerIndex(null);
+        setReview('');
+        setRatings(0);
 
-      setReview('');
-      setRatings(0);
-      setSelectedWorkerIndex(null);
-
-      constants.current.isVisible({
-        status: 'ok',
-        message: 'Thank you for your review! 💙',
-        handlePressOk: () => constants.current.backdropPress(),
-      });
-
-      if (updatedWorkers.length === 0) {
-        setTimeout(() => {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{name: 'OnGoingHistoryStack'}],
-            }),
-          );
-        }, 500);
+        constants.current.isVisible({
+          status: 'ok',
+          message: 'Review submitted successfully 💙',
+          handlePressOk: () => constants.current.backdropPress(),
+        });
       }
     } catch (error) {
       setIsLoading(false);
@@ -135,22 +147,16 @@ const RateUsScreen = ({route}) => {
         leftIcon={appIcons.goBackIcon}
       />
 
-      {workers.length > 0 ? (
-        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-          <Text style={styles.headerText}>Rate Our Workers</Text>
-          <Text style={styles.subHeaderText}>
-            {workers.length} worker(s) to review
-          </Text>
+      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+        <Text style={styles.headerText}>Rate Our Workers</Text>
 
-          {workers.map((worker, index) => (
+        {workers.map((worker, index) => {
+          const isReviewed = worker?.isReviewed;
+
+          return (
             <View key={worker?.jobSeekerId?._id}>
-              {/* Worker Card */}
               <TouchableOpacity
-                onPress={() =>
-                  setSelectedWorkerIndex(
-                    selectedWorkerIndex === index ? null : index,
-                  )
-                }
+                onPress={() => handleOpenWorker(index)}
                 style={[
                   styles.workerCard,
                   selectedWorkerIndex === index && styles.workerCardSelected,
@@ -171,40 +177,45 @@ const RateUsScreen = ({route}) => {
                 </Text>
               </TouchableOpacity>
 
-              {/* Expanded Review Form */}
               {selectedWorkerIndex === index && (
                 <View style={styles.expandedContainer}>
-                  {/* Rating Section */}
+                  {/* Rating */}
                   <View style={styles.ratingContainer}>
                     <Text style={styles.ratingLabel}>Select Rating:</Text>
-                    <StarRating rating={ratings} setRating={setRatings} />
+                    <StarRating
+                      rating={ratings}
+                      setRating={setRatings}
+                      disabled={isReviewed}
+                    />
                   </View>
 
-                  {/* Review Input */}
                   <Text style={styles.reviewLabel}>Write A Review</Text>
                   <View style={styles.inputContainer}>
                     <InputField
                       placeholder="Share your experience with this worker"
                       placeholderTextColor={appColors.gray}
-                      multiline={true}
+                      multiline
                       borderRadius={width(6)}
                       value={review}
-                      onChangeText={text => setReview(text)}
+                      isEditable={!isReviewed}
+                      onChangeText={setReview}
                     />
                   </View>
 
-                  {/* Action Buttons */}
                   <View style={styles.actionButtonsContainer}>
-                    <TouchableOpacity
-                      onPress={handleReviewSubmit}
-                      style={styles.submitBtn}>
-                      <Text style={styles.submitBtnText}>Submit Review</Text>
-                    </TouchableOpacity>
+                    {!isReviewed && (
+                      <TouchableOpacity
+                        onPress={handleReviewSubmit}
+                        style={styles.submitBtn}>
+                        <Text style={styles.submitBtnText}>Submit Review</Text>
+                      </TouchableOpacity>
+                    )}
+
                     <TouchableOpacity
                       onPress={() => {
+                        setSelectedWorkerIndex(null);
                         setReview('');
                         setRatings(0);
-                        setSelectedWorkerIndex(null);
                       }}
                       style={styles.cancelBtn}>
                       <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -213,30 +224,11 @@ const RateUsScreen = ({route}) => {
                 </View>
               )}
             </View>
-          ))}
+          );
+        })}
 
-          <View style={styles.continueButtonContainer}>
-            <Button
-              handlePressBtn={() =>
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{name: 'OnGoingHistoryStack'}],
-                  }),
-                )
-              }
-              btnFontSize={12}
-              btnTitle={'Continue without Review'}
-              btnTextStyle={styles.buttonText}
-              buttonContainer={styles.submitButton}
-            />
-          </View>
-
-          <View style={styles.bottomSpace} />
-        </ScrollView>
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>All workers reviewed!</Text>
+        <View style={styles.bottomSpace} />
+        <View style={styles.continueButtonContainer}>
           <Button
             handlePressBtn={() =>
               navigation.dispatch(
@@ -252,7 +244,7 @@ const RateUsScreen = ({route}) => {
             buttonContainer={styles.submitButton}
           />
         </View>
-      )}
+      </ScrollView>
 
       <CommonAlert ref={constants} />
       <Loader isLoading={isLoading} />
@@ -262,24 +254,22 @@ const RateUsScreen = ({route}) => {
 
 export default RateUsScreen;
 
-const StarRating = ({rating, setRating}) => {
-  return (
-    <View style={styles.starRow}>
-      {[1, 2, 3, 4, 5].map(item => (
-        <TouchableOpacity
-          key={item}
-          style={{marginLeft: 5}}
-          onPress={() => setRating(item)}
-          activeOpacity={0.7}>
-          <Image
-            source={item <= rating ? appIcons.starFilled : appIcons.starOutline}
-            style={styles.starIcon}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
+const StarRating = ({rating, setRating, disabled}) => (
+  <View style={styles.starRow}>
+    {[1, 2, 3, 4, 5].map(item => (
+      <TouchableOpacity
+        key={item}
+        disabled={disabled}
+        onPress={() => setRating(item)}
+        style={{opacity: disabled ? 0.4 : 1}}>
+        <Image
+          source={item <= rating ? appIcons.starFilled : appIcons.starOutline}
+          style={styles.starIcon}
+        />
+      </TouchableOpacity>
+    ))}
+  </View>
+);
 
 const styles = StyleSheet.create({
   headerText: {
@@ -429,6 +419,7 @@ const styles = StyleSheet.create({
   },
   continueButtonContainer: {
     paddingHorizontal: width(3),
-    paddingVertical: width(3),
+    paddingVertical: width(10),
+    backgroundColor: 'transparent',
   },
 });

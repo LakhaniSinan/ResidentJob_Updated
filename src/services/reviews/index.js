@@ -8,3 +8,7 @@ export const createReveiw = (params, userId) => {
 export const fetchAllReviews = userId => {
   return Api(`${endPoints.fetchReviews}/${userId}`, null, requestType.GET);
 };
+
+export const getWorkerReviews = params => {
+  return Api(endPoints.workerReviews, params, requestType.POST);
+};

@@ -56,6 +56,7 @@ export const endPoints = {
   fetchWalletData: '/user/wallet/fetch',
   clearPayment: '/user/wallet/clear-payment',
   fetchReviews: '/user/review/fetch',
+  workerReviews: '/admin/group-job/worker-review',
   changePassword: '/user/profile/change-password',
   sendNotification: '/user/send-notification',
   updateDetails: '/user/job-seeker/detail',
