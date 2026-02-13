@@ -15,7 +15,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { width } from 'react-native-dimension';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {pickImageFromLibrary} from '../../../utills/imagePickerUtil';
 import Modal from 'react-native-modal';
 import { useSelector } from 'react-redux';
 import { appIcons, appImages, fontFamily } from '../../../assets';
@@ -85,27 +85,22 @@ const ChatWithAdmin = ({route}) => {
 
   const handleImagePick = async () => {
     try {
-      setIsLoading(true)
-      const options = { mediaType: 'photo', quality: 0.8 };
-      const response = await launchImageLibrary(options);
+      setIsLoading(true);
+      const image = await pickImageFromLibrary();
 
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
+      if (!image) {
         return;
       }
 
-      if (response.assets && response.assets.length > 0) {
-        const image = response.assets[0];
-        const result = await helper.uploadImageToCloudinary(image);
-        if (result) {
-          setAttachmentImage(result);
-          console.log(result);
-        }
+      const result = await helper.uploadImageToCloudinary(image);
+      if (result) {
+        setAttachmentImage(result);
+        console.log(result);
       }
     } catch (error) {
       console.log('Image picker error:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 

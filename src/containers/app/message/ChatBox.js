@@ -12,7 +12,7 @@ import {
   View
 } from 'react-native';
 import { width } from 'react-native-dimension';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {pickImageFromLibrary} from '../../../utills/imagePickerUtil';
 import Modal from 'react-native-modal';
 import { useSelector } from 'react-redux';
 import { appIcons, fontFamily } from '../../../assets';
@@ -83,27 +83,21 @@ const ChatBox = ({ route }) => {
 
 
   const handleImagePick = async () => {
-
     try {
-      setIsLoading(true)
-      const options = { mediaType: 'photo', quality: 0.8 };
-      const response = await launchImageLibrary(options);
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
+      setIsLoading(true);
+      const image = await pickImageFromLibrary();
+      if (!image) {
         return;
       }
 
-      if (response.assets && response.assets.length > 0) {
-        const image = response.assets[0];
-        const result = await helper.uploadImageToCloudinary(image);
-        if (result) {
-          setAttachmentImage(result);
-        }
+      const result = await helper.uploadImageToCloudinary(image);
+      if (result) {
+        setAttachmentImage(result);
       }
     } catch (error) {
       console.log('Image picker error:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 

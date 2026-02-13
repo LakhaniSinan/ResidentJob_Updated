@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import {width} from 'react-native-dimension';
-import ImagePicker from 'react-native-image-picker';
+import {pickImageFromLibrary} from '../../utills/imagePickerUtil';
 import {useDispatch, useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../assets';
 import AppHeader from '../../components/appHeader';
@@ -340,81 +340,56 @@ const ProfileScreen = () => {
     });
   };
 
-  const handleImagePick = type => {
+  const handleImagePick = async type => {
     try {
-      const options = {
-        mediaType: 'photo',
-        quality: 0.8,
-        includeBase64: false,
-      };
+      setIsLoading(true);
 
-      ImagePicker.launchImageLibrary(options, async response => {
-        try {
-          setIsLoading(true);
-
-          if (response.didCancel) {
-            console.log('User cancelled image picker');
-            return;
-          }
-
-          if (response.errorCode) {
-            console.log('ImagePicker Error:', response.errorMessage);
-            Alert.alert(
-              'Error',
-              response.errorMessage || 'Failed to pick image',
-            );
-            return;
-          }
-
-          if (response.assets && response.assets.length > 0) {
-            const image = response.assets[0];
-            const responce = await helper.uploadImageToCloudinary(image);
-
-            if (responce) {
-              if (type === 'proImage') {
-                setFormData(prevData => ({
-                  ...prevData,
-                  image: responce,
-                }));
-              } else if (type === 'resume') {
-                setFormData(prevData => ({
-                  ...prevData,
-                  resumeImage: responce,
-                }));
-              } else if (type === 'supportingDoc') {
-                setFormData(prevData => ({
-                  ...prevData,
-                  supportingDoc: responce,
-                }));
-              } else if (type === 'educationDocument') {
-                setFormData(prevData => ({
-                  ...prevData,
-                  document: responce,
-                }));
-              }
-
-              constants.current.isVisible({
-                status: 'ok',
-                message: 'Image uploaded successfully!',
-              });
-            } else {
-              console.log('No response received from upload service');
-              Alert.alert(
-                'Error',
-                'Failed to upload image. No response received.',
-              );
-            }
-          }
-        } catch (error) {
-          console.log('Image upload error:', error);
-          Alert.alert('Error', 'Failed to upload image: ' + error.message);
-        } finally {
-          setIsLoading(false);
-        }
+      const image = await pickImageFromLibrary({
+        cropping: type === 'proImage' || type === 'educationDocument',
       });
+
+      if (!image) {
+        return; // user cancelled
+      }
+
+      const responce = await helper.uploadImageToCloudinary(image);
+
+      if (responce) {
+        if (type === 'proImage') {
+          setFormData(prevData => ({
+            ...prevData,
+            image: responce,
+          }));
+        } else if (type === 'resume') {
+          setFormData(prevData => ({
+            ...prevData,
+            resumeImage: responce,
+          }));
+        } else if (type === 'supportingDoc') {
+          setFormData(prevData => ({
+            ...prevData,
+            supportingDoc: responce,
+          }));
+        } else if (type === 'educationDocument') {
+          setFormData(prevData => ({
+            ...prevData,
+            document: responce,
+          }));
+        }
+
+        constants.current?.isVisible?.({
+          status: 'ok',
+          message: 'Image uploaded successfully!',
+        });
+      } else {
+        console.log('No response received from upload service');
+        Alert.alert('Error', 'Failed to upload image. No response received.');
+      }
     } catch (error) {
-      console.log('Image picker error:', error);
-      Alert.alert('Error', 'Failed to open image picker: ' + error.message);
+      console.log('Image upload error:', error);
+      Alert.alert('Error', 'Failed to upload image: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -760,6 +735,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('email', value)}
               keyboardType="email-address"
               autoCapitalize="none"
+              isEditable={false}
             />
           </View>
           <View style={{marginTop: width(2)}}>
@@ -777,33 +753,7 @@ const ProfileScreen = () => {
               }}
             />
           </View>
-          <View style={{marginTop: width(2)}}>
-            <TouchableOpacity
-              onPress={handleCallMe}
-              style={{
-                backgroundColor: appColors.primaryColor,
-                paddingVertical: width(3),
-                borderRadius: width(100),
-                alignItems: 'center',
-                flexDirection: 'row',
-                justifyContent: 'center',
-              }}>
-              <Entypo
-                name="phone"
-                size={20}
-                color={appColors.white}
-                style={{marginRight: width(2)}}
-              />
-              <Text
-                style={{
-                  color: appColors.white,
-                  fontFamily: fontFamily.poppinsSemiBold,
-                  fontSize: 14,
-                }}>
-                Call Me
-              </Text>
-            </TouchableOpacity>
-          </View>
+          
           <View style={{marginTop: width(2)}}>
             <InputField
               placeholder="About me"

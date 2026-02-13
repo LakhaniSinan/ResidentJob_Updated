@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { width } from 'react-native-dimension';
 import FastImage from 'react-native-fast-image';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {pickImageFromLibrary} from '../../../utills/imagePickerUtil';
 import { useSelector } from 'react-redux';
 import { fontFamily } from '../../../assets';
 import AuthHeader from '../../../components/authHeader';
@@ -57,23 +57,18 @@ const AddCategoryFood = ({ route }) => {
     }
 
     try {
-      // Use launchImageLibrary to open the photo picker, limit to images
-      let image = await launchImageLibrary({
-        mediaType: 'photo',
-        selectionLimit: 1,  // Limiting to 1 image only
-        quality: 0.8,
-        includeBase64: false,
-        cropping: true,  // Optional: cropping the image
-      });
+      const image = await pickImageFromLibrary({cropping: true});
 
-      if (!image.didCancel && !image.errorCode) {
-        setIsLoading(true);
-        let response = await uploadImageToCloudinary(image);
-        setIsLoading(false);
+      if (!image) {
+        return;
+      }
 
-        if (response !== 'error') {
-          setInputVall(prev => ({ ...prev, images: [...prev.images, response] }));
-        }
+      setIsLoading(true);
+      let response = await uploadImageToCloudinary(image);
+      setIsLoading(false);
+
+      if (response !== 'error') {
+        setInputVall(prev => ({...prev, images: [...prev.images, response]}));
       }
     } catch (error) {
       setIsLoading(false);

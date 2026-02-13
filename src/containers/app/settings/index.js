@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import {width} from 'react-native-dimension';
-import {launchImageLibrary} from 'react-native-image-picker';
+import {pickImageFromLibrary} from '../../../utills/imagePickerUtil';
 import {useDispatch, useSelector} from 'react-redux';
 import {appIcons, fontFamily} from '../../../assets';
 import AppHeader from '../../../components/appHeader';
@@ -68,6 +68,13 @@ const Settings = ({route}) => {
       const response = await getUserProfile(user?._id);
       let data = response.data?.data;
 
+      // Normalize contact so UI always shows only one "+1"
+      const rawContact = data?.contact ?? '';
+      const cleanedContact =
+        typeof rawContact === 'string'
+          ? rawContact.replace(/\D/g, '').replace(/^1/, '')
+          : '';
+
       setProfileImage(data?.image);
       setIsLoading(false);
       setInputs({
@@ -77,7 +84,7 @@ const Settings = ({route}) => {
         email: data?.email || 'N/A',
         location: data?.location || 'N/A',
         area: data?.area || 'N/A',
-        contact: data?.contact || 'N/A',
+        contact: cleanedContact,
         hourlyRate: data?.hourlyRate?.toString() || '',
         countryCode: data?.countryCode || '',
         legalname: data?.legalname || '',
@@ -94,20 +101,15 @@ const Settings = ({route}) => {
   const handleImagePick = async () => {
     try {
       setIsLoading(true);
-      const options = {mediaType: 'photo', quality: 0.8};
-      const response = await launchImageLibrary(options);
+      const image = await pickImageFromLibrary();
 
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-        return;
+      if (!image) {
+        return; // user cancelled
       }
 
-      if (response.assets && response.assets.length > 0) {
-        const image = response.assets[0];
-        const result = await helper.uploadImageToCloudinary(image);
-        if (result) {
-          setProfileImage(result);
-        }
+      const result = await helper.uploadImageToCloudinary(image);
+      if (result) {
+        setProfileImage(result);
       }
     } catch (error) {
       console.log('Image picker error:', error);
