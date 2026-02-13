@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import {width} from 'react-native-dimension';
-import {fontFamily} from '../../assets';
+import {fontFamily, appIcons} from '../../assets';
 import {appColors} from '../../constants';
 import moment from 'moment';
 
@@ -28,9 +28,19 @@ const RenderReviewCard = ({item}) => {
           <Text style={styles.name}>
             {item?.jobSeekerId?.firstname} {item?.jobSeekerId?.lastname || ''}
           </Text>
-          <Text style={styles.totalHoursText}>
-            {totalHours.toFixed(2)}h worked
-          </Text>
+
+          {/* ⭐ Rating Line (Only Adjusted Part) */}
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {item?.totalReviews > 0 && (
+              <View style={styles.ratingRow}>
+                <Image source={appIcons.starFilled} style={styles.starIcon} />
+                <Text style={styles.ratingText}>
+                  {Number(item?.averageRating || 0).toFixed(1)} (
+                  {item?.totalReviews || 0} reviews)
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
 
@@ -89,11 +99,13 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
+
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: width(3),
   },
+
   profileImage: {
     width: width(14),
     height: width(14),
@@ -101,27 +113,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: appColors.lightGray,
   },
+
   userInfo: {
     marginLeft: width(3),
-    justifyContent: 'center',
+    flex: 1,
   },
+
   name: {
     fontFamily: fontFamily.poppinsSemiBold,
     fontSize: 16,
     color: appColors.black,
   },
-  totalHoursText: {
-    fontFamily: fontFamily.poppinsRegular,
+
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  starIcon: {
+    width: 18,
+    height: 18,
+    marginBottom: 5,
+    marginRight: 4,
+  },
+
+  ratingText: {
     fontSize: 12,
     color: appColors.gray,
-    marginTop: 2,
+    fontFamily: fontFamily.poppinsMedium,
   },
+
+  totalHoursText: {
+    fontFamily: fontFamily.poppinsRegular,
+    color: appColors.gray,
+    marginRight: 10,
+  },
+
   tableContainer: {
     marginTop: width(2),
     borderRadius: width(2),
     backgroundColor: '#f9f9f9',
     overflow: 'hidden',
   },
+
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: appColors.primary,
@@ -130,6 +164,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
     justifyContent: 'space-around',
   },
+
   headerText: {
     flex: 1,
     textAlign: 'center',
@@ -137,6 +172,7 @@ const styles = StyleSheet.create({
     color: appColors.black,
     fontSize: 13,
   },
+
   tableRow: {
     flexDirection: 'row',
     paddingVertical: width(2),
@@ -144,6 +180,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
   },
+
   rowText: {
     flex: 1,
     textAlign: 'center',

@@ -392,6 +392,11 @@ const SearchScreen = ({route}) => {
           ? await updatedJob(item?._id, params)
           : await createGorupJob(params);
 
+      console.log(
+        groupJobResponse,
+        'groupJobResponsegroupJobResponsegroupJobResponse',
+      );
+
       if (![200, 201].includes(groupJobResponse.status)) {
         setLoading(false);
         return constants.current.isVisible({

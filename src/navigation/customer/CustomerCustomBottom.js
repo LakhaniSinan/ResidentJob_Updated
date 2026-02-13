@@ -34,7 +34,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
       key: 'OnGoingHistoryStack-gPt3xzFo--bZZhKxdAQrJ',
     },
     {
-      name: 'Search',
+      name: 'Post A Job',
       routeName: 'SearchStack',
       image: appIcons.searchIcon,
       key: 'SearchStack-gPt3xzFo--bZZhKxdAQrJ',
@@ -112,12 +112,13 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 999,
+                    marginBottom: width(1.5),
                   }}>
                   <View style={{position: 'absolute', bottom: width(2)}}>
                     <TouchableOpacity
                       style={{
-                        height: width(19),
-                        width: width(19),
+                        height: width(18),
+                        width: width(18),
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: 100,
@@ -150,7 +151,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                       <Entypo name="plus" size={40} color={appColors.white} />
                     </TouchableOpacity>
                   </View>
-                  <Text style={{color: appColors.white, fontSize: 12}}>
+                  <Text style={{color: appColors.white, fontSize: 10}}>
                     {item.name}
                   </Text>
                 </View>
@@ -175,14 +176,13 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                   }}
                   style={{
                     alignItems: 'center',
-                    marginRight: index === 1 ? 30 : 0,
-                    marginLeft: index === 3 ? 30 : 0,
+                    marginBottom: width(1.5),
                   }}>
                   <Image
                     source={item.image}
                     style={{
-                      width: width(8),
-                      height: width(8),
+                      width: width(6),
+                      height: width(6),
                       tintColor: isFocused ? appColors.yellow : appColors.white,
                     }}
                     resizeMode="contain"
@@ -190,7 +190,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                   <Text
                     style={{
                       color: isFocused ? appColors.yellow : appColors.white,
-                      fontSize: 12,
+                      fontSize: 10,
                     }}>
                     {item.name}
                   </Text>

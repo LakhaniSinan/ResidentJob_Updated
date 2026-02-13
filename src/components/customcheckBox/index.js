@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
     marginVertical: width(2),
   },
   checkbox: {
-    width: width(6),
-    height: width(6),
+    width: width(5),
+    height: width(5),
     borderRadius: 5,
     borderWidth: 2,
     justifyContent: 'center',
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     color: appColors.black,
     fontFamily: fontFamily.poppinsLight,
   },

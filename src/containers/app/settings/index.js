@@ -19,7 +19,6 @@ import AppHeader from '../../../components/appHeader';
 import Button from '../../../components/button';
 import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
-import PhoneInputComponent from '../../../components/phoneInput';
 import InputField from '../../../components/textInput';
 import {appColors} from '../../../constants';
 import {helper} from '../../../helper';
@@ -68,8 +67,6 @@ const Settings = ({route}) => {
       setIsLoading(true);
       const response = await getUserProfile(user?._id);
       let data = response.data?.data;
-      console.log(data, 'datadata');
-      console.log('NEQ Number:', data?.neqnumber);
 
       setProfileImage(data?.image);
       setIsLoading(false);
@@ -146,7 +143,7 @@ const Settings = ({route}) => {
       location,
       hourlyRate,
       email,
-      contact,
+      contact: `+1${contact}`,
       area,
       image: profileImage,
       neqnumber,
@@ -311,18 +308,22 @@ const Settings = ({route}) => {
                 onChangeText={value => onChangeText('neqnumber', value)}
               />
             </View>
-            <View style={{marginTop: width(3)}}>
-              <PhoneInputComponent
-                value={inputs?.contact}
-                onChangeText={value => onChangeText('contact', value)}
-                onChangeCountryCode={value =>
-                  setInputs({
-                    ...inputs,
-                    countryCode: value.callingCode.toString(),
-                  })
-                }
+            <View style={{marginTop: width(2)}}>
+              <InputField
+                placeholder="Contact Number"
+                value={inputs.contact ? `+1${inputs.contact}` : '+1'}
+                placeholderTextColor={appColors.gray}
+                keyboardType="phone-pad"
+                onChangeText={value => {
+                  let cleaned = value.replace(/\D/g, ''); // sirf numbers
+                  if (cleaned.startsWith('1')) {
+                    cleaned = cleaned.slice(1); // agar user +1 type kare to remove
+                  }
+                  onChangeText('contact', cleaned);
+                }}
               />
             </View>
+
             <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Personal Responsible'}

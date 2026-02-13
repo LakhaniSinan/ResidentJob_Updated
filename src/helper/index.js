@@ -92,9 +92,6 @@ export const helper = {
         .get(url)
         .then(response => {
           const data = response.data;
-          console.log('Geocoding API response status:', data.status);
-          console.log('Full API response:', JSON.stringify(data, null, 2));
-
           if (data.status === 'OK' && data.results.length > 0) {
             const location = data.results[0].formatted_address;
             console.log('Geocoding successful:', location);

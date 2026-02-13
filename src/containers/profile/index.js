@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Entypo from '@react-native-vector-icons/entypo';
 import moment from 'moment';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
   Image,
@@ -10,13 +10,13 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import DatePicker from 'react-native-date-picker';
-import { width } from 'react-native-dimension';
-import { launchImageLibrary } from 'react-native-image-picker'; // Import the right package
-import { useDispatch, useSelector } from 'react-redux';
-import { appIcons, fontFamily } from '../../assets';
+import {width} from 'react-native-dimension';
+import ImagePicker from 'react-native-image-picker';
+import {useDispatch, useSelector} from 'react-redux';
+import {appIcons, fontFamily} from '../../assets';
 import AppHeader from '../../components/appHeader';
 import Button from '../../components/button';
 import CommonAlert from '../../components/commanAlert';
@@ -25,36 +25,35 @@ import CustomPicker from '../../components/customPicker';
 import Loader from '../../components/loader';
 import PhoneInputComponent from '../../components/phoneInput';
 import InputField from '../../components/textInput';
-import { appColors } from '../../constants';
-import { helper } from '../../helper';
-import { setUserData } from '../../redux/slices/Login';
-import { GetCategory, GetJobTitle } from '../../services/authentication';
-import { updateDetails } from '../../services/profile';
-import { styles } from './style';
+import {appColors} from '../../constants';
+import {helper} from '../../helper';
+import {setUserData} from '../../redux/slices/Login';
+import {GetCategory, GetJobTitle} from '../../services/authentication';
+import {updateDetails} from '../../services/profile';
+import {styles} from './style';
 
-
-const genders = [{ name: 'Male' }, { name: 'Female' }, { name: 'Others' }];
+const genders = [{name: 'Male'}, {name: 'Female'}, {name: 'Others'}];
 const national = [
-  { name: 'Not Applicable' },
-  { name: 'Awaiting Enlistment' },
-  { name: 'Others' },
-  { name: 'Serving' },
-  { name: 'Completed' },
-  { name: 'Exempted' },
+  {name: 'Not Applicable'},
+  {name: 'Awaiting Enlistment'},
+  {name: 'Others'},
+  {name: 'Serving'},
+  {name: 'Completed'},
+  {name: 'Exempted'},
 ];
-const employmentStatus = [{ name: 'Employed' }, { name: 'Unemployed' }];
+const employmentStatus = [{name: 'Employed'}, {name: 'Unemployed'}];
 const educationLevel = [
-  { name: 'DIPLOMA' },
-  { name: 'MAPAQ' },
-  { name: 'CERTIFICATE' },
-  { name: 'HASP' },
+  {name: 'DIPLOMA'},
+  {name: 'MAPAQ'},
+  {name: 'CERTIFICATE'},
+  {name: 'HASP'},
 ];
 const ProfileScreen = () => {
   const dispatch = useDispatch();
   const constants = useRef(null);
   const jobPickerRef = useRef();
   const genderRef = useRef();
-  const { user } = useSelector(state => state.LoginSlice);
+  const {user} = useSelector(state => state.LoginSlice);
   const [selectedCuisines, setSelectedCuisines] = useState([]);
   const [categories, setCategories] = useState([]);
   const nationalRef = useRef();
@@ -244,7 +243,7 @@ const ProfileScreen = () => {
           setCategories(response.data.data);
         }
       })
-      .catch(error => { })
+      .catch(error => {})
       .finally(() => {
         setIsLoading(false);
       });
@@ -319,7 +318,7 @@ const ProfileScreen = () => {
 
   const handleChange = (name, value) => {
     setFormData(prev => {
-      const next = { ...prev };
+      const next = {...prev};
 
       if (name === 'workPass') {
         next.workPass = value;
@@ -341,56 +340,81 @@ const ProfileScreen = () => {
     });
   };
 
-  const handleImagePick = async (type) => {
+  const handleImagePick = type => {
     try {
-      setIsLoading(true)
-      const options = { mediaType: 'photo', quality: 0.8 };
-      const response = await launchImageLibrary(options);
+      const options = {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+      };
 
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-        return;
-      }
+      ImagePicker.launchImageLibrary(options, async response => {
+        try {
+          setIsLoading(true);
 
-      if (response.assets && response.assets.length > 0) {
-        const image = response.assets[0];
-        const responce = await helper.uploadImageToCloudinary(image);
-        if (responce) {
-          if (type == 'proImage') {
-            setFormData(prevData => ({
-              ...prevData,
-              image: responce,
-            }));
-          } else if (type === 'resume') {
-            setFormData(prevData => ({
-              ...prevData,
-              resumeImage: responce,
-            }));
-          } else if (type === 'supportingDoc') {
-            setFormData(prevData => ({
-              ...prevData,
-              supportingDoc: responce,
-            }));
-          } else if (type === 'educationDocument') {
-            setFormData(prevData => ({
-              ...prevData,
-              document: responce,
-            }));
+          if (response.didCancel) {
+            console.log('User cancelled image picker');
+            return;
           }
 
-          constants.current.isVisible({
-            status: 'ok',
-            message: 'Image uploaded successfully!',
-          });
-        } else {
-          console.log('No response received from upload service');
-          Alert.alert('Error', 'Failed to upload image. No response received.');
+          if (response.errorCode) {
+            console.log('ImagePicker Error:', response.errorMessage);
+            Alert.alert(
+              'Error',
+              response.errorMessage || 'Failed to pick image',
+            );
+            return;
+          }
+
+          if (response.assets && response.assets.length > 0) {
+            const image = response.assets[0];
+            const responce = await helper.uploadImageToCloudinary(image);
+
+            if (responce) {
+              if (type === 'proImage') {
+                setFormData(prevData => ({
+                  ...prevData,
+                  image: responce,
+                }));
+              } else if (type === 'resume') {
+                setFormData(prevData => ({
+                  ...prevData,
+                  resumeImage: responce,
+                }));
+              } else if (type === 'supportingDoc') {
+                setFormData(prevData => ({
+                  ...prevData,
+                  supportingDoc: responce,
+                }));
+              } else if (type === 'educationDocument') {
+                setFormData(prevData => ({
+                  ...prevData,
+                  document: responce,
+                }));
+              }
+
+              constants.current.isVisible({
+                status: 'ok',
+                message: 'Image uploaded successfully!',
+              });
+            } else {
+              console.log('No response received from upload service');
+              Alert.alert(
+                'Error',
+                'Failed to upload image. No response received.',
+              );
+            }
+          }
+        } catch (error) {
+          console.log('Image upload error:', error);
+          Alert.alert('Error', 'Failed to upload image: ' + error.message);
+        } finally {
+          setIsLoading(false);
         }
-      }
+      });
     } catch (error) {
       console.log('Image picker error:', error);
-    } finally {
-      setIsLoading(false)
+      Alert.alert('Error', 'Failed to open image picker: ' + error.message);
     }
   };
 
@@ -479,41 +503,8 @@ const ProfileScreen = () => {
       Alert.alert('Error', 'No phone number available');
     }
   };
-
   const onDone = async () => {
-    // if (
-    //   !formData?.image ||
-    //   !formData?.firstname ||
-    //   !formData?.lastname ||
-    //   !formData?.email ||
-    //   !formData?.contact ||
-    //   !formData?.countryCode ||
-    //   !formData?.aboutMe ||
-    //   !formData?.dateOfBirth ||
-    //   !formData?.gender ||
-    //   !formData?.employmentStatus ||
-    //   !formData?.educationalLevel ||
-    //   !formData?.expectedYear ||
-    //   !formData?.resumeImage ||
-    //   !formData?.supportingDoc
-    // ) {
-    //   Alert.alert('Error', 'All Fields Are Required');
-    //   return;
-    // } else if (!formData?.workPass || !formData?.lookingJob) {
-    //   Alert.alert('Error', 'Please Choose One Of Them');
-    //   return;
-    // } else if (!formData?.volunteering || !formData?.training) {
-    //   Alert.alert('Error', 'Please Choose One Of Them');
-    //   return;
-    // } else if (educationData?.length == 0) {
-    //   Alert.alert('Error', 'At least one education entry is required');
-    //   return;
-    // } else if (experiencesData?.length == 0) {
-    //   Alert.alert('Error', 'At least one experience entry is required');
-    //   return;
-    // } else {
-    console.log(formData?.dateOfBirth, 'ormData?.dateOfBirth');
-
+    // 1️⃣ Validation: check required fields
     if (!formData.image) {
       Alert.alert('Error', 'Please upload profile image');
       return;
@@ -534,102 +525,150 @@ const ProfileScreen = () => {
       Alert.alert('Error', 'Please enter contact number');
       return;
     }
-    if (!formData?.aboutMe) {
+    if (!formData.aboutMe) {
       Alert.alert('Error', 'Please enter about details');
       return;
     }
-    if (!formData?.gender) {
+    if (!formData.gender) {
       Alert.alert('Error', 'Please select gender');
       return;
     }
-    if (!formData?.employmentStatus) {
-      // Alert.alert('Error', 'Please select gender');
+    if (!formData.employmentStatus) {
       Alert.alert('Error', 'Please select employment status');
       return;
     }
-    if (!formData?.educationalLevel) {
-      // Alert.alert('Error', 'Please select gender');
+    if (!formData.educationalLevel) {
       Alert.alert('Error', 'Please select education level');
       return;
     }
-    if (!formData?.dateOfBirth) {
-      // Alert.alert('Error', 'Please select gender');
-      Alert.alert('Error', 'Please select date of birth');
-      return;
-    }
-    if (!formData?.dateOfBirth) {
-      // Alert.alert('Error', 'Please select gender');
+    if (!formData.dateOfBirth) {
       Alert.alert('Error', 'Please select date of birth');
       return;
     }
     if (!formData.category) {
-      // Alert.alert('Error', 'Please select gender');
-      Alert.alert('Error', 'Please select date of birth');
+      Alert.alert('Error', 'Please select job title');
       return;
     }
+
     try {
-      let params = {
+      // 2️⃣ Prepare params to send to API
+      const params = {
         jobSeekerId: user?.userDetails?._id,
-        image: formData?.image,
-        firstname: formData?.firstname,
-        lastname: formData?.lastname,
-        email: formData?.email,
+        image: formData.image,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
         jobTitle: formData.category,
         expertCuisine: selectedCuisines,
-        isPassRequire: formData?.workPass,
-        isNeedHelp: formData?.lookingJob,
-        contact: formData?.contact,
-        countryCode: formData?.countryCode,
-        about: formData?.aboutMe,
-        dob: formData?.dateOfBirth,
-        gender: formData?.gender,
-        nationalServices: formData?.nationalService,
-        employmentStatus: formData?.employmentStatus,
-        educationLevel: formData?.educationalLevel,
-        graduationYear: formData?.expectedYear,
-        isVolunteering: formData?.volunteering,
-        isTraining: formData?.training,
-        resumeUrl: formData?.resumeImage,
-        startDate: formData?.startDate,
-        endDate: formData?.endDate,
-        supportDocUrl: formData?.supportingDoc,
+        isPassRequire: formData.workPass,
+        isNeedHelp: formData.lookingJob,
+        contact: formData.contact,
+        countryCode: formData.countryCode,
+        about: formData.aboutMe,
+        dob: formData.dateOfBirth,
+        gender: formData.gender,
+        nationalServices: formData.nationalService,
+        employmentStatus: formData.employmentStatus,
+        educationLevel: formData.educationalLevel,
+        graduationYear: formData.expectedYear,
+        isVolunteering: formData.volunteering,
+        isTraining: formData.training,
+        resumeUrl: formData.resumeImage,
+        supportDocUrl: formData.supportingDoc,
         education: educationData,
         experience: experiencesData,
       };
 
       setIsLoading(true);
-      const responce = await updateDetails(params);
-
+      const responce = await updateDetails(params); // API call
       setIsLoading(false);
-      if (responce.status == 200 || responce.status == 201) {
+
+      if (responce.status === 200 || responce.status === 201) {
+        // ✅ Show success alert
         constants.current.isVisible({
           status: 'ok',
           message: responce.data.message,
+
+          // 3️⃣ Important: OK press handler to update Redux + Local State
           handlePressOk: () => {
-            let data = {
+            // 3a️⃣ Update Redux store
+            const updatedUser = {
               ...user,
               jobSeekerDetails: responce?.data?.data,
+              userDetails: {
+                ...user?.userDetails,
+                firstname: formData.firstname,
+                lastname: formData.lastname,
+                email: formData.email,
+                contact: formData.contact,
+                countryCode: formData.countryCode,
+              },
             };
-            dispatch(setUserData(data));
-            AsyncStorage.setItem('userData', JSON.stringify(data));
+
+            console.log(
+              updatedUser,
+              'updatedUserupdatedUserupdatedUserupdatedUser',
+            );
+
+            dispatch(setUserData(updatedUser));
+            AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+
+            // 3b️⃣ Update local states so UI shows fresh data
+            const j = responce?.data?.data || {};
+
+            setFormData(prev => ({
+              ...prev,
+              image: j.image || '',
+              firstname: j.firstname || '',
+              lastname: j.lastname || '',
+              email: j.email || '',
+              contact: j.contact || '',
+              countryCode: j.countryCode || '',
+              aboutMe: j.about || '',
+              workPass: j.isPassRequire || false,
+              lookingJob: j.isNeedHelp || false,
+              category: j.jobTitle || '',
+              hourlyRate: j.hourlyRate || 0,
+              dateOfBirth: j.dob || null,
+              gender: j.gender || '',
+              nationalService: j.nationalServices || '',
+              employmentStatus: j.employmentStatus || '',
+              educationalLevel: j.educationLevel || '',
+              expectedYear: j.graduationYear || '',
+              volunteering: j.isVolunteering || false,
+              training: j.isTraining || false,
+              resumeImage: j.resumeUrl || '',
+              supportingDoc: j.supportDocUrl || '',
+            }));
+
+            setEducationData(j.education || []);
+            setExperiencesData(j.experience || []);
+
+            // Update selected job name in local state
+            setSelectedJob(
+              jobTitle.find(item => item._id === j.jobTitle)?.name || '',
+            );
           },
         });
       } else {
-        console.log(responce.data, 'responce.data');
-
+        // ❌ Error from API
         constants.current.isVisible({
           status: 'error',
-          message: responce.data.message,
+          message: responce.data.message || 'Something went wrong!',
         });
       }
     } catch (error) {
       setIsLoading(false);
-      console.log('🚀 ~ onDone ~ error:', error);
+      console.log('🚀 onDone error:', error);
+      constants.current.isVisible({
+        status: 'error',
+        message: 'Failed to update profile. Please try again!',
+      });
     }
   };
 
   const handleJobSelect = (name, id) => {
-    setFormData({ ...formData, category: id });
+    setFormData({...formData, category: id});
     setSelectedJob(name);
   };
 
@@ -649,13 +688,13 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
+    <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
       <Loader isLoading={isLoading} />
       <AppHeader
         height={width(20)}
         heading={'Profile Screen'}
         headingColor={appColors.white}
-        leftIconStyle={{ height: 27, width: 27 }}
+        leftIconStyle={{height: 27, width: 27}}
       />
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -674,7 +713,7 @@ const ProfileScreen = () => {
             }}>
             <Image
               source={
-                formData?.image ? { uri: formData?.image } : appIcons.accountIcon
+                formData?.image ? {uri: formData?.image} : appIcons.accountIcon
               }
               resizeMode="cover"
               style={{
@@ -697,8 +736,7 @@ const ProfileScreen = () => {
               <Entypo name="camera" size={22} color={appColors.black} />
             </TouchableOpacity>
           </View>
-
-          <View style={{ marginTop: width(4) }}>
+          <View style={{marginTop: width(4)}}>
             <InputField
               value={formData.firstname}
               placeholder="First Name"
@@ -706,8 +744,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('firstname', value)}
             />
           </View>
-
-          <View style={{ marginTop: width(2) }}>
+          <View style={{marginTop: width(2)}}>
             <InputField
               value={formData.lastname}
               placeholder="Last Name"
@@ -715,8 +752,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('lastname', value)}
             />
           </View>
-
-          <View style={{ marginTop: width(2) }}>
+          <View style={{marginTop: width(2)}}>
             <InputField
               placeholder="Email"
               value={formData.email}
@@ -726,25 +762,26 @@ const ProfileScreen = () => {
               autoCapitalize="none"
             />
           </View>
+          <View style={{marginTop: width(2)}}>
+            <InputField
+              placeholder="Contact Number"
+              value={formData.contact || '+1'}
+              placeholderTextColor={appColors.gray}
+              keyboardType="phone-pad"
+              onChangeText={value => {
+                let cleaned = value.replace(/\D/g, ''); // sirf numbers
+                // remove starting 1 agar +1 already hai
+                if (cleaned.startsWith('1')) cleaned = cleaned.slice(1);
 
-          <PhoneInputComponent
-            value={formData?.contact}
-            onChangeText={value => handleChange('contact', value)}
-            onChangeCountryCode={
-              value => {
-                console.log(
-                  value.callingCode.toString(),
-                  'value.callingCode.toString()',
-                );
-              }
-            }
-          />
-
-          <View style={{ marginTop: width(3) }}>
+                handleChange('contact', '+1' + cleaned); // hamesha +1 add karo
+              }}
+            />
+          </View>
+          <View style={{marginTop: width(2)}}>
             <TouchableOpacity
               onPress={handleCallMe}
               style={{
-                backgroundColor: appColors.green,
+                backgroundColor: appColors.primaryColor,
                 paddingVertical: width(3),
                 borderRadius: width(100),
                 alignItems: 'center',
@@ -755,7 +792,7 @@ const ProfileScreen = () => {
                 name="phone"
                 size={20}
                 color={appColors.white}
-                style={{ marginRight: width(2) }}
+                style={{marginRight: width(2)}}
               />
               <Text
                 style={{
@@ -767,8 +804,7 @@ const ProfileScreen = () => {
               </Text>
             </TouchableOpacity>
           </View>
-
-          <View style={{ marginTop: width(2) }}>
+          <View style={{marginTop: width(2)}}>
             <InputField
               placeholder="About me"
               multiline={true}
@@ -778,8 +814,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('aboutMe', value)}
             />
           </View>
-
-          <View style={{ marginTop: width(3) }}>
+          <View style={{marginTop: width(3)}}>
             <CustomCheckBox
               checked={formData.workPass}
               type="checkout"
@@ -807,7 +842,7 @@ const ProfileScreen = () => {
         <View style={styles.containerStyles}>
           <Text style={styles.containerHeading}>Job Type</Text>
 
-          <View style={{ marginTop: width(1) }}>
+          <View style={{marginTop: width(1)}}>
             <CustomPicker
               ref={jobPickerRef}
               marginVertical={width(4)}
@@ -866,7 +901,7 @@ const ProfileScreen = () => {
             }}>
             Graduation Year (expected)
           </Text>
-          <View style={{ marginTop: width(3) }}>
+          <View style={{marginTop: width(3)}}>
             <InputField
               placeholder="Graduation Year (expected)"
               value={formData.expectedYear}
@@ -875,7 +910,7 @@ const ProfileScreen = () => {
               onChangeText={value => handleChange('expectedYear', value)}
             />
           </View>
-          <View style={{ marginTop: width(1) }}>
+          <View style={{marginTop: width(1)}}>
             <CustomPicker
               ref={genderRef}
               marginVertical={width(4)}
@@ -888,7 +923,7 @@ const ProfileScreen = () => {
             />
           </View>
 
-          <View style={{ marginTop: -width(3) }}>
+          <View style={{marginTop: -width(3)}}>
             <CustomPicker
               ref={employmentStatusRef}
               marginVertical={width(4)}
@@ -900,7 +935,7 @@ const ProfileScreen = () => {
               }
             />
           </View>
-          <View style={{ marginTop: -width(3) }}>
+          <View style={{marginTop: -width(3)}}>
             <CustomPicker
               ref={educationLevelRef}
               marginVertical={width(4)}
@@ -920,7 +955,7 @@ const ProfileScreen = () => {
           <CustomCheckBox
             checked={formData.volunteering}
             type="checkout"
-            containerStyles={{ borderWidth: 1, borderColor: appColors.blue }}
+            containerStyles={{borderWidth: 1, borderColor: appColors.blue}}
             label="I am interested in volunteering"
             onChange={() =>
               handleChange('volunteering', !formData.volunteering)
@@ -929,7 +964,7 @@ const ProfileScreen = () => {
           <CustomCheckBox
             checked={formData.training}
             type="checkout"
-            containerStyles={{ borderWidth: 1, borderColor: appColors.blue }}
+            containerStyles={{borderWidth: 1, borderColor: appColors.blue}}
             label="I am interested in training"
             onChange={() => handleChange('training', !formData.training)}
           />
@@ -963,7 +998,7 @@ const ProfileScreen = () => {
           </View>
           {showEducationForm && (
             <>
-              <View style={{ marginTop: width(1) }}>
+              <View style={{marginTop: width(1)}}>
                 <CustomPicker
                   ref={educationRef}
                   marginVertical={width(4)}
@@ -975,7 +1010,7 @@ const ProfileScreen = () => {
                   }
                 />
               </View>
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <InputField
                   placeholder="Diploma/Certificate/Degree Name"
                   value={formData.degreeName}
@@ -983,7 +1018,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('degreeName', value)}
                 />
               </View>
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <InputField
                   placeholder="School / Institute"
                   value={formData.school}
@@ -991,7 +1026,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('school', value)}
                 />
               </View>
-              <Text style={[styles.containerHeading, { marginTop: width(3) }]}>
+              <Text style={[styles.containerHeading, {marginTop: width(3)}]}>
                 Period from - to (year)
               </Text>
               <View
@@ -1000,7 +1035,7 @@ const ProfileScreen = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                 }}>
-                <View style={{ marginTop: width(2), width: width(40) }}>
+                <View style={{marginTop: width(2), width: width(40)}}>
                   <InputField
                     placeholder="2022"
                     keyboardType="numeric"
@@ -1009,7 +1044,7 @@ const ProfileScreen = () => {
                     onChangeText={value => handleChange('startDate', value)}
                   />
                 </View>
-                <View style={{ marginTop: width(2), width: width(40) }}>
+                <View style={{marginTop: width(2), width: width(40)}}>
                   <InputField
                     placeholder="2025"
                     keyboardType="numeric"
@@ -1021,7 +1056,7 @@ const ProfileScreen = () => {
               </View>
 
               {/* Add Document Upload Section */}
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <Text style={styles.containerHeading}>Education Documents</Text>
                 <Text
                   style={{
@@ -1053,7 +1088,7 @@ const ProfileScreen = () => {
                       justifyContent: 'center',
                     }}
                     onPress={() => handleImagePick('educationDocument')}>
-                    <Text style={{ color: appColors.black }}>Choose File</Text>
+                    <Text style={{color: appColors.black}}>Choose File</Text>
                   </TouchableOpacity>
                   <Text
                     numberOfLines={1}
@@ -1110,7 +1145,7 @@ const ProfileScreen = () => {
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row' }}>
+                      <View style={{flexDirection: 'row'}}>
                         <TouchableOpacity
                           onPress={() => onEdit(item, index)}
                           style={{
@@ -1121,9 +1156,7 @@ const ProfileScreen = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginRight: width(2),
-                          }}>
-
-                        </TouchableOpacity>
+                          }}></TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => onDelete(index)}
                           style={{
@@ -1133,9 +1166,7 @@ const ProfileScreen = () => {
                             backgroundColor: 'white',
                             alignItems: 'center',
                             justifyContent: 'center',
-                          }}>
-
-                        </TouchableOpacity>
+                          }}></TouchableOpacity>
                       </View>
                     </View>
                     <Text
@@ -1146,7 +1177,7 @@ const ProfileScreen = () => {
                       }}>
                       {item?.degreeName}
                     </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
                       <Text
                         numberOfLines={1}
                         style={{
@@ -1173,7 +1204,7 @@ const ProfileScreen = () => {
 
                     {/* Show document if available */}
                     {item?.document && (
-                      <View style={{ marginTop: width(2) }}>
+                      <View style={{marginTop: width(2)}}>
                         <Text
                           style={{
                             fontFamily: fontFamily.poppinsBold,
@@ -1219,7 +1250,7 @@ const ProfileScreen = () => {
           </View>
           {showExperiencesForm && (
             <>
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <InputField
                   placeholder="Job Title"
                   value={formData.jobTitle}
@@ -1227,7 +1258,7 @@ const ProfileScreen = () => {
                   onChangeText={value => handleChange('jobTitle', value)}
                 />
               </View>
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <InputField
                   placeholder="Company Name"
                   value={formData.company}
@@ -1236,7 +1267,7 @@ const ProfileScreen = () => {
                 />
               </View>
 
-              <View style={{ marginTop: width(2) }}>
+              <View style={{marginTop: width(2)}}>
                 <InputField
                   placeholder="Job key responsibilities (point-form)"
                   value={formData.responsibilities}
@@ -1248,7 +1279,7 @@ const ProfileScreen = () => {
                   }
                 />
               </View>
-              <Text style={[styles.containerHeading, { marginTop: width(3) }]}>
+              <Text style={[styles.containerHeading, {marginTop: width(3)}]}>
                 Work period from - to
               </Text>
               <View
@@ -1360,7 +1391,7 @@ const ProfileScreen = () => {
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row' }}>
+                      <View style={{flexDirection: 'row'}}>
                         <TouchableOpacity
                           onPress={() => onExpEdit(item, index)}
                           style={{
@@ -1371,9 +1402,7 @@ const ProfileScreen = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             marginRight: width(2),
-                          }}>
-
-                        </TouchableOpacity>
+                          }}></TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => onExpDelete(index)}
                           style={{
@@ -1383,9 +1412,7 @@ const ProfileScreen = () => {
                             backgroundColor: 'white',
                             alignItems: 'center',
                             justifyContent: 'center',
-                          }}>
-
-                        </TouchableOpacity>
+                          }}></TouchableOpacity>
                       </View>
                     </View>
                     <Text
@@ -1455,7 +1482,7 @@ const ProfileScreen = () => {
                   justifyContent: 'center',
                 }}
                 onPress={() => handleImagePick('resume')}>
-                <Text style={{ color: appColors.black }}>Choose File</Text>
+                <Text style={{color: appColors.black}}>Choose File</Text>
               </TouchableOpacity>
               <Text
                 numberOfLines={1}
@@ -1468,7 +1495,6 @@ const ProfileScreen = () => {
               </Text>
             </View>
           </View>
-
 
           <View style={{}}>
             <Text
@@ -1499,7 +1525,7 @@ const ProfileScreen = () => {
                   justifyContent: 'center',
                 }}
                 onPress={() => handleImagePick('supportingDoc')}>
-                <Text style={{ color: appColors.black }}>Choose File</Text>
+                <Text style={{color: appColors.black}}>Choose File</Text>
               </TouchableOpacity>
               <Text
                 numberOfLines={1}

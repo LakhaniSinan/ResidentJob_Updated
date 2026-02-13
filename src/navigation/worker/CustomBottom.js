@@ -179,8 +179,8 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                   <Image
                     source={item.image}
                     style={{
-                      width: width(8),
-                      height: width(8),
+                      width: width(6),
+                      height: width(6),
                       tintColor: isFocused ? appColors.yellow : appColors.white,
                     }}
                     resizeMode="contain"
@@ -188,7 +188,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                   <Text
                     style={{
                       color: isFocused ? appColors.yellow : appColors.white,
-                      fontSize: 12,
+                      fontSize: 10,
                     }}>
                     {item.label}
                   </Text>

@@ -3,6 +3,7 @@ import moment from 'moment';
 import React, {useCallback, useRef, useState} from 'react';
 import {
   FlatList,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -21,6 +22,7 @@ import CommonAlert from '../../../components/commanAlert';
 import Loader from '../../../components/loader';
 import {appColors} from '../../../constants';
 import {checkIn, checkOut, fetchJobDetails} from '../../../services/createJob';
+import {getWorkerReviews} from '../../../services/reviews';
 
 const calculateTotalCost = data => {
   let totalCost = 0;
@@ -52,7 +54,7 @@ const getTodaysCheckInOut = checkInOutArray => {
 const OnGoingHistoryDetails = ({route}) => {
   const item = route.params;
   console.log(item, 'itemitemitemitemitemitem123413');
-
+  const alertRef = useRef();
   const _id = item?.groupJob?._id || item?._id || item?.jobId;
   console.log(_id, '_id_id_id_id_id');
 
@@ -61,14 +63,50 @@ const OnGoingHistoryDetails = ({route}) => {
   const modalRef = useRef();
   const {user} = useSelector(state => state.LoginSlice);
   const [historyDetails, setHistoryDetails] = useState(null);
-  const [review, setReview] = useState(null);
+  const [reviews, setReviews] = useState(null);
+  console.log(reviews, 'reviewsreviewsreviewsreviewsreviewsreviews');
+
   const [isLoading, setIsLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       fetchJobDetailData();
+      fetchWorkerReviews();
     }, [_id]),
   );
+
+  const fetchWorkerReviews = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getWorkerReviews({
+        workerId: user?.userDetails?._id,
+        jobId: _id,
+      });
+
+      console.log(response, 'responseresponseresponseresponseresponseresponse');
+
+      if (response?.status === 200 || response?.status === 201) {
+        setReviews(response?.data?.review || null);
+        // setWorkerInfo(response?.data?.worker);
+      } else {
+        alertRef.current?.isVisible({
+          status: 'error',
+          message: response?.data?.message || 'Failed to load reviews',
+          handlePressOk: () => alertRef.current?.backdropPress(),
+        });
+      }
+    } catch (error) {
+      console.log('🚀 ~ fetchWorkerReviews ~ error:', error);
+      alertRef.current?.isVisible({
+        status: 'error',
+        message: 'Error loading reviews',
+        handlePressOk: () => alertRef.current?.backdropPress(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const fetchJobDetailData = async () => {
     try {
       setIsLoading(true);
@@ -93,7 +131,7 @@ const OnGoingHistoryDetails = ({route}) => {
         }
 
         setWorkerDetails(response.data.workerDetails);
-        setReview(response.data.review);
+        // setReview(response.data.review);
       } else {
         modalRef.current.isVisible({
           status: 'error',
@@ -432,35 +470,33 @@ const OnGoingHistoryDetails = ({route}) => {
             </View>
           </View>
         )}
-        {jobStatus == 'Completed' && (
-          <View
-            style={{
-              marginHorizontal: width(2),
-            }}>
-            {workerDetails && (
-              <Button
-                handlePressBtn={() => {
-                  navigation.navigate('WorkerReviewsScreen', {
-                    workerId:
-                      workerDetails?._id || workerDetails?.jobSeekerId?._id,
-                    jobId: _id,
-                  });
-                }}
-                btnFontSize={12}
-                btnTitle={'View Worker Reviews'}
-                btnTextStyle={{
-                  color: appColors.white,
-                }}
-                buttonContainer={{
-                  backgroundColor: appColors.primaryColor,
-                  borderColor: appColors.primaryColor,
-                  borderWidth: 1,
-                  borderRadius: 12,
-                  paddingVertical: width(3),
-                  marginVertical: width(2),
-                }}
-              />
-            )}
+        {jobStatus == 'Completed' && reviews && (
+          <View style={styles.reviewSection}>
+            <Text style={styles.sectionTitle}>Customer Review</Text>
+
+            <View style={styles.reviewCard}>
+              <Text style={styles.customerName}>
+                {reviews?.customer?.firstname} {reviews?.customer?.lastname}
+              </Text>
+
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Image
+                    key={i}
+                    source={
+                      i <= reviews?.rating
+                        ? appIcons.starFilled
+                        : appIcons.starOutline
+                    }
+                    style={styles.starIcon}
+                  />
+                ))}
+              </View>
+
+              <Text style={styles.reviewText}>
+                {reviews?.reviewText || 'No review message'}
+              </Text>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -509,5 +545,54 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  sectionTitle: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 16,
+    color: appColors.black,
+    marginBottom: width(2),
+  },
+  reviewSection: {
+    paddingHorizontal: width(3),
+    marginVertical: width(3),
+  },
+
+  reviewCard: {
+    backgroundColor: '#F9FAFF',
+    borderRadius: 14,
+    padding: width(4),
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: {width: 0, height: 3},
+    shadowRadius: 6,
+    elevation: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: appColors.primaryColor,
+  },
+
+  customerName: {
+    fontFamily: fontFamily.poppinsBold,
+    fontSize: 15,
+    color: appColors.black,
+  },
+
+  starsRow: {
+    flexDirection: 'row',
+    marginVertical: width(1.5),
+  },
+
+  starIcon: {
+    width: width(5),
+    height: width(5),
+    resizeMode: 'contain',
+    marginRight: 4,
+  },
+
+  reviewText: {
+    fontFamily: fontFamily.poppinsRegular,
+    fontSize: 13,
+    color: appColors.gray,
+    marginTop: width(1),
+    lineHeight: 20,
   },
 });

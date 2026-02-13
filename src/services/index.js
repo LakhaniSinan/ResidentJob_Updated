@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export let baseUrl = 'https://sirldigital.com/residentJob/api';
-// export let baseUrl = 'https://tk4c2l16-4000.euw.devtunnels.ms/api';
+// export let baseUrl = 'https://sirldigital.com/residentJob/api';
+export let baseUrl = 'https://tk4c2l16-4000.euw.devtunnels.ms/api';
 // export let baseUrl = 'https://1qsx0vd0-4000.inc1.devtunnels.ms/api';
 // export let baseUrl = 'http://192.168.100.89:5000/api';
 
@@ -14,6 +14,7 @@ const api = async (path, params, method) => {
     ...(params && {data: JSON.stringify(params)}),
   };
 
+  console.log('API Request:', {path, params, method});
   return axios(baseUrl + path, options)
     .then(response => {
       return response;

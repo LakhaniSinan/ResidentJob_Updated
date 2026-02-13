@@ -1,22 +1,29 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, ScrollView, Text, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { width } from 'react-native-dimension';
+import {useNavigation} from '@react-navigation/native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import {width} from 'react-native-dimension';
 import Ionicons from '@react-native-vector-icons/ionicons';
-import { appIcons, fontFamily } from '../../assets';
+import {appIcons, fontFamily} from '../../assets';
 import AuthHeader from '../../components/authHeader';
 import Button from '../../components/button';
 import CommonAlert from '../../components/commanAlert';
 import Loader from '../../components/loader';
 import PhoneInputComponent from '../../components/phoneInput';
 import InputField from '../../components/textInput';
-import { appColors } from '../../constants';
-import { sendOtp } from '../../services/authentication';
+import {appColors} from '../../constants';
+import {sendOtp} from '../../services/authentication';
 import AppHeader from '../../components/appHeader';
 import CustomCheckBox from '../../components/customcheckBox';
-import { stat } from 'react-native-fs';
+import {stat} from 'react-native-fs';
 
-const Registration = ({ route }) => {
+const Registration = ({route}) => {
   const state = route.params;
   const [isAgree, setIsAgree] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -27,11 +34,11 @@ const Registration = ({ route }) => {
   const [formData, setFormData] = useState({
     firstname: '',
     lastname: '',
-    legalname: "",
+    legalname: '',
     email: '',
     password: '',
-    address: "",
-    personalResponsible: "",
+    address: '',
+    personalResponsible: '',
     neqnumber: '',
     countryCode: '',
     contact: '',
@@ -39,7 +46,7 @@ const Registration = ({ route }) => {
   });
 
   const handleChange = (name, value) =>
-    setFormData({ ...formData, [name]: value });
+    setFormData({...formData, [name]: value});
 
   const handleRegister = async () => {
     const {
@@ -63,12 +70,11 @@ const Registration = ({ route }) => {
       contact == '' ||
       confirmPassword == '' ||
       password == '' ||
-      (state == 'hire' && (
-        neqnumber == '' ||
-        address === '' ||
-        legalname == "" ||
-        personalResponsible == ""
-      ))
+      (state == 'hire' &&
+        (neqnumber == '' ||
+          address === '' ||
+          legalname == '' ||
+          personalResponsible == ''))
     ) {
       constants.current.isVisible({
         status: 'error',
@@ -95,13 +101,13 @@ const Registration = ({ route }) => {
           password,
           countryCode,
           type: state,
-          status: state == "hire" ? true : false,
+          status: state == 'hire' ? true : false,
           ...(state == 'hire' && {
             address,
             legalname,
             neqnumber,
             personalResponsible,
-          })
+          }),
         };
         const payload = {
           email: formData.email,
@@ -109,7 +115,7 @@ const Registration = ({ route }) => {
           type: state,
         };
 
-        console.log(params, "paramsparamsparams");
+        console.log(params, 'paramsparamsparams');
 
         setIsLoading(true);
         const response = await sendOtp(payload);
@@ -138,27 +144,27 @@ const Registration = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: appColors.white }}>
+    <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
       <Loader isLoading={isLoading} />
       <CommonAlert ref={constants} />
       <AppHeader
         height={width(20)}
         heading={`Register As ${state == 'hire' ? 'Resident' : 'Worker'}`}
         headingColor={appColors.white}
-        leftIconStyle={{ height: 27, width: 27 }}
+        leftIconStyle={{height: 27, width: 27}}
         leftIcon={appIcons.goBackIcon}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={{flex: 1}}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
         <ScrollView
-          style={{ flex: 1 }}
+          style={{flex: 1}}
           showsVerticalScrollIndicator={false}
           bounces={false}
           keyboardShouldPersistTaps="handled">
-          <View style={{ paddingHorizontal: width(3) }}>
-            <View style={{ marginTop: width(5) }}>
+          <View style={{paddingHorizontal: width(3)}}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={formData.firstname}
                 placeholder="First Name"
@@ -166,7 +172,7 @@ const Registration = ({ route }) => {
                 onChangeText={value => handleChange('firstname', value)}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={formData.lastname}
                 placeholder="Last Name"
@@ -174,15 +180,17 @@ const Registration = ({ route }) => {
                 onChangeText={value => handleChange('lastname', value)}
               />
             </View>
-            {state == 'hire' && <View style={{ marginTop: width(5) }}>
-              <InputField
-                value={formData.legalname}
-                placeholder="Legal Name"
-                placeholderTextColor={appColors.gray}
-                onChangeText={value => handleChange('legalname', value)}
-              />
-            </View>}
-            <View style={{ marginTop: width(5) }}>
+            {state == 'hire' && (
+              <View style={{marginTop: width(5)}}>
+                <InputField
+                  value={formData.legalname}
+                  placeholder="Legal Name"
+                  placeholderTextColor={appColors.gray}
+                  onChangeText={value => handleChange('legalname', value)}
+                />
+              </View>
+            )}
+            <View style={{marginTop: width(5)}}>
               <InputField
                 value={formData.email}
                 placeholder="Email"
@@ -190,26 +198,33 @@ const Registration = ({ route }) => {
                 onChangeText={value => handleChange('email', value)}
               />
             </View>
-            {state == 'hire' && <View style={{ marginTop: width(5) }}>
+            {state == 'hire' && (
+              <View style={{marginTop: width(5)}}>
+                <InputField
+                  value={formData.neqnumber}
+                  placeholder="NEQ Number"
+                  keyboardType="number-pad"
+                  placeholderTextColor={appColors.gray}
+                  onChangeText={value => handleChange('neqnumber', value)}
+                />
+              </View>
+            )}
+            <View style={{marginTop: width(5)}}>
               <InputField
-                value={formData.neqnumber}
-                placeholder="NEQ Number"
-                keyboardType='number-pad'
+                placeholder="Contact Number"
+                value={formData.contact ? `+1${formData.contact}` : '+1'}
                 placeholderTextColor={appColors.gray}
-                onChangeText={value => handleChange('neqnumber', value)}
+                keyboardType="phone-pad"
+                onChangeText={value => {
+                  let cleaned = value.replace(/\D/g, ''); // sirf numbers
+                  if (cleaned.startsWith('1')) {
+                    cleaned = cleaned.slice(1); // agar user +1 type kare to remove
+                  }
+                  handleChange('contact', cleaned);
+                }}
               />
-            </View>}
-            <PhoneInputComponent
-              value={formData?.contact}
-              onChangeText={value => handleChange('contact', value)}
-              onChangeCountryCode={value =>
-                setFormData({
-                  ...formData,
-                  countryCode: value.callingCode.toString(),
-                })
-              }
-            />
-            <View style={{ marginTop: width(5) }}>
+            </View>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Password'}
                 placeholderTextColor={appColors.gray}
@@ -226,7 +241,7 @@ const Registration = ({ route }) => {
                 onEndIconPress={() => setShowPass(!showPass)}
               />
             </View>
-            <View style={{ marginTop: width(5) }}>
+            <View style={{marginTop: width(5)}}>
               <InputField
                 placeholder={'Confirm password'}
                 placeholderTextColor={appColors.gray}
@@ -243,23 +258,29 @@ const Registration = ({ route }) => {
                 onEndIconPress={() => setShowRePass(!showRePass)}
               />
             </View>
-            {state == 'hire' && <View style={{ marginTop: width(5) }}>
-              <InputField
-                placeholder={'Personal Responsible'}
-                placeholderTextColor={appColors.gray}
-                value={formData.personalResponsible}
-                onChangeText={value => handleChange('personalResponsible', value)}
-              />
-            </View>}
-            {state == 'hire' && <View style={{ marginTop: width(5) }}>
-              <InputField
-                placeholder={'Address'}
-                placeholderTextColor={appColors.gray}
-                value={formData.address}
-                onChangeText={value => handleChange('address', value)}
-              />
-            </View>}
-            <View style={{ marginTop: width(1) }}>
+            {state == 'hire' && (
+              <View style={{marginTop: width(5)}}>
+                <InputField
+                  placeholder={'Personal Responsible'}
+                  placeholderTextColor={appColors.gray}
+                  value={formData.personalResponsible}
+                  onChangeText={value =>
+                    handleChange('personalResponsible', value)
+                  }
+                />
+              </View>
+            )}
+            {state == 'hire' && (
+              <View style={{marginTop: width(5)}}>
+                <InputField
+                  placeholder={'Address'}
+                  placeholderTextColor={appColors.gray}
+                  value={formData.address}
+                  onChangeText={value => handleChange('address', value)}
+                />
+              </View>
+            )}
+            <View style={{marginTop: width(1)}}>
               <CustomCheckBox
                 checked={isAgree}
                 onChange={setIsAgree}
@@ -288,7 +309,7 @@ const Registration = ({ route }) => {
               handlePressBtn={handleRegister}
             />
           </View>
-          <View style={{ height: width(10) }} />
+          <View style={{height: width(10)}} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
