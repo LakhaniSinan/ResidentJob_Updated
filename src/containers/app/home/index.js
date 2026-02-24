@@ -148,7 +148,7 @@ const Home = () => {
         />
 
         {/* Floating Create Job Button */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => navigation.navigate('SearchStack')}
           style={{
@@ -172,7 +172,7 @@ const Home = () => {
             }}>
             Create Job
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <CommonAlert ref={modalRef} />
       </SafeAreaView>

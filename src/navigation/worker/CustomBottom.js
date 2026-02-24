@@ -50,10 +50,10 @@ const BottomTabs = ({state, descriptors, navigation}) => {
       key: 'ChatStack-J2IG9nugYrczVcTV9G8V8',
     },
     {
-      name: 'Settings',
+      name: 'Profile',
       routeName: 'SettingsStack',
       image: appIcons.settingsicon,
-      label: 'Settings',
+      label: 'Profile',
       key: 'MenuStack-N_zEWlCIijX1Sxn0801yC',
     },
   ];
@@ -138,7 +138,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                         });
                         if (!isFocused && !event.defaultPrevented) {
                           if (
-                            item.name === 'Settings' &&
+                            item.name === 'Profile' &&
                             user?.userDetails?.role === 'hire'
                           ) {
                             navigation.navigate('CustomerSettings');
@@ -172,8 +172,6 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                   }}
                   style={{
                     alignItems: 'center',
-                    marginRight: index === 1 ? 30 : 0,
-                    marginLeft: index === 3 ? 30 : 0,
                     marginBottom: width(1.5),
                   }}>
                   <Image

@@ -18,7 +18,7 @@ const WorkerCustomDrawer = ({navigation}) => {
   const WorkerDrawerArray = [
     {
       label: 'Home',
-      onPress: () => navigation.navigate('HomeBottom',{screen: 'FindStack'}),
+      onPress: () => navigation.navigate('HomeBottom', {screen: 'FindStack'}),
       tabIcon: appIcons.drawerHome,
     },
     {
@@ -37,6 +37,21 @@ const WorkerCustomDrawer = ({navigation}) => {
       onPress: () => navigation.navigate('ChatWithAdmin'),
       tabIcon: appIcons.massegeIcon,
     },
+    {
+      label: 'Terms & Conditions',
+      onPress: () => navigation.navigate('TermsAndCondition'),
+      tabIcon: appIcons.myJobs,
+    },
+    {
+      label: "Job's Terms & Conditions",
+      onPress: () => navigation.navigate('JobsTermsAndConditions'),
+      tabIcon: appIcons.myJobs,
+    },
+    {
+      label: 'Privacy Policy',
+      onPress: () => navigation.navigate('PrivacyPolicy'),
+      tabIcon: appIcons.myJobs,
+    },
     // {
     //     label: 'My Reviews',
     //     onPress: () => navigation.navigate('MyReviews'),
@@ -47,12 +62,12 @@ const WorkerCustomDrawer = ({navigation}) => {
     //     onPress: () => navigation.navigate('MyWallet'),
     //     tabIcon: appIcons.walletIcon,
     // },
-    {
-      label: 'Profile',
-      onPress: () =>
-        navigation.navigate('HomeBottom', {screen: 'SettingsStack'}),
-      tabIcon: appIcons.accountIcon,
-    },
+    // {
+    //   label: 'Profile',
+    //   onPress: () =>
+    //     navigation.navigate('HomeBottom', {screen: 'SettingsStack'}),
+    //   tabIcon: appIcons.accountIcon,
+    // },
   ];
 
   const iconsToRender = WorkerDrawerArray;
@@ -79,7 +94,7 @@ const WorkerCustomDrawer = ({navigation}) => {
               fontSize: 16,
               color: appColors.black,
             }}>
-            +{user?.userDetails?.contact}
+            {user?.userDetails?.contact}
           </Text>
         )}
         <Text

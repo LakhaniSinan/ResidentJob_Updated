@@ -48,13 +48,28 @@ const CustomerCustomDrawer = ({navigation}) => {
     },
 
     {
-      label: 'Profile',
-      onPress: () =>
-        navigation.navigate('HomeBottom', {
-          screen: 'CustomerSettingsStack',
-        }),
-      tabIcon: appIcons.accountIcon,
+      label: 'Terms & Conditions',
+      onPress: () => navigation.navigate('TermsAndCondition'),
+      tabIcon: appIcons.myJobs,
     },
+    {
+      label: "Job's Terms & Conditions",
+      onPress: () => navigation.navigate('JobsTermsAndConditions'),
+      tabIcon: appIcons.myJobs,
+    },
+    {
+      label: 'Privacy Policy',
+      onPress: () => navigation.navigate('PrivacyPolicy'),
+      tabIcon: appIcons.myJobs,
+    },
+    // {
+    //   label: 'Profile',
+    //   onPress: () =>
+    //     navigation.navigate('HomeBottom', {
+    //       screen: 'CustomerSettingsStack',
+    //     }),
+    //   tabIcon: appIcons.accountIcon,
+    // },
   ];
 
   return (
@@ -81,7 +96,7 @@ const CustomerCustomDrawer = ({navigation}) => {
                   fontSize: 16,
                   color: appColors.black,
                 }}>
-                +{user?.userDetails?.contact}
+                {user?.userDetails?.contact}
               </Text>
             )}
             <Text

@@ -14,26 +14,26 @@ import AppHeader from '../../../components/appHeader';
 import {appColors} from '../../../constants';
 import {getSettings} from '../../../services/setting';
 
-const TermsAndCondition = () => {
+const JobsTermsAndConditions = () => {
   const {width: screenWidth} = useWindowDimensions();
   const [htmlContent, setHtmlContent] = useState('');
   const [loading, setLoading] = useState(false);
   useFocusEffect(
     useCallback(() => {
-      fetchTerms();
+      fetchPrivacyPolicy();
     }, []),
   );
 
-  const fetchTerms = async () => {
+  const fetchPrivacyPolicy = async () => {
     try {
       setLoading(true);
       const res = await getSettings();
 
       if (res.status === 200) {
-        setHtmlContent(res.data.data.termsAndCondition);
+        setHtmlContent(res.data.data.termsOfJob);
       }
     } catch (error) {
-      console.error('Failed to fetch Terms & Conditions', error);
+      console.error('Failed to fetch Jobs Terms and Conditions', error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ const TermsAndCondition = () => {
     <SafeAreaView style={{flex: 1, backgroundColor: appColors.white}}>
       <AppHeader
         height={width(20)}
-        heading={'Terms & Conditions'}
+        heading={'Jobs Terms and Conditions'}
         headingColor={appColors.white}
         leftIconStyle={{height: 27, width: 27}}
         leftIcon={appIcons.goBackIcon}
@@ -110,4 +110,4 @@ const TermsAndCondition = () => {
   );
 };
 
-export default TermsAndCondition;
+export default JobsTermsAndConditions;

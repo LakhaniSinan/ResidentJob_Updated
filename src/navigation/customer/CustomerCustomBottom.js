@@ -47,7 +47,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
       key: 'SupportStack-J2IG9nugYrczVcTV9G8V8',
     },
     {
-      name: 'Settings',
+      name: 'Profile',
       routeName: 'CustomerSettingsStack',
       image: appIcons.settingsicon,
       key: 'SettingsStack-N_zEWlCIijX1Sxn0801yC',
@@ -126,6 +126,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                         borderColor: appColors.white,
                         backgroundColor: '#FFB400',
                         marginBottom: width(3),
+                        marginLeft: width(1),
                       }}
                       activeOpacity={0.8}
                       onPress={() => {
@@ -136,7 +137,7 @@ const BottomTabs = ({state, descriptors, navigation}) => {
                         });
                         if (!isFocused && !event.defaultPrevented) {
                           if (
-                            item.name === 'Settings' &&
+                            item.name === 'Profile' &&
                             user?.userDetails?.role === 'hire'
                           ) {
                             navigation.navigate('CustomerSettings');

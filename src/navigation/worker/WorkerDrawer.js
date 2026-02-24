@@ -12,6 +12,9 @@ import ChangePassword from '../../containers/auth/changePassword';
 import JobsDirections from '../../containers/app/jobsDirections';
 import WorkerCustomDrawer from './CustomDrawer';
 import WorkerBottom from './WorkerBottom';
+import TermsAndCondition from '../../containers/app/termsAndCondition';
+import PrivacyPolicy from '../../containers/app/privacyPolicy';
+import JobsTermsAndConditions from '../../containers/app/jobsTermsAndConditions';
 
 const Drawer = createDrawerNavigator();
 
@@ -32,6 +35,12 @@ function WorkerDrawer() {
       />
       <Drawer.Screen name="OnGoingHistory" component={OnGoingHistory} />
       <Drawer.Screen name="MyReviews" component={MyReviews} />
+      <Drawer.Screen name="TermsAndCondition" component={TermsAndCondition} />
+      <Drawer.Screen
+        name="JobsTermsAndConditions"
+        component={JobsTermsAndConditions}
+      />
+      <Drawer.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
       <Drawer.Screen name="AllFoodByCategory" component={AllFoodByCategory} />
       <Drawer.Screen name="ChangePassword" component={ChangePassword} />
       {/* <Drawer.Screen name="Message" component={MessageStack} /> */}
